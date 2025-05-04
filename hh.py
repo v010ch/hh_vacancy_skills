@@ -8,7 +8,7 @@
 #    - [x] try - except блок при загрузке данных с сайта
 #    - [ ] сделать приложением?
 
-# In[108]:
+# In[1]:
 
 
 import requests
@@ -32,32 +32,64 @@ import pandas as pd
 # In[3]:
 
 
-get_ipython().run_line_magic('pylab', 'inline')
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# In[ ]:
+# In[31]:
 
 
-
+BREAK_STOP_LEVEL = 3
 
 
 # In[4]:
 
 
 addr = 'https://api.hh.ru/vacancies'
-head = {'User-Agent': 'NoApp'}
+head = {'User-Agent': 'StudyApp/0.0.1'}
 
 
-# In[21]:
+# In[5]:
 
 
-vacancies_list = [ 'Data scientist',
-'Data science', 
-'Ml specialist', 
-'Machine learning', 
-#'Data Analyst',
-#'master data',
-'ML']
+vacancies_list = ['Data scientist',
+                  'Data science', 
+                  'Machine learning', 
+                  'ML',
+                  'Ml-engeneer', 
+                  'CV-engeneer',
+                  'NLP',
+                 ]
+
+
+# In[6]:
+
+
+
+
+
+# In[7]:
+
+
+element = vacancies_list[0]
+answ = requests.get(addr, params={'text':element}, headers = head)
+
+
+# In[13]:
+
+
+answ.json().keys()
+
+
+# In[14]:
+
+
+answ.json()['pages']
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
@@ -71,20 +103,36 @@ vacancies_list = [ 'Data scientist',
 # 'description': {'......'}    
 # 'key_skills': [{'name': 'Мат стат'}, {'name': 'Мат анализ'}, {'name': 'Python'}, {'name': 'Git'}]     
 # 'published_at': YYYY-MM-DDThh:mm:ss±hhmm
-
-# ### Забираем данные по вакансиям с hh
-
-# In[22]:
-
-
-clr = lambda x: (re.sub(r'<.*?>', '', str(x)))
-BREAK_STOP_LEVEL = 3
+answ_pages.json()['items'][0].keys()
+dict_keys(['id', 'premium', 'name', 'department', 'has_test', 'response_letter_required', 'area', 'salary', 'salary_range', 'type', 'address', 'response_url', 'sort_point_distance', 'published_at', 'created_at', 'archived', 'apply_alternate_url', 'branding', 'show_logo_in_search', 'show_contacts', 'insider_interview', 'url', 'alternate_url', 'relations', 'employer', 'snippet', 'contacts', 'schedule', 'working_days', 'working_time_intervals', 'working_time_modes', 'accept_temporary', 'fly_in_fly_out_duration', 'work_format', 'working_hours', 'work_schedule_by_days', 'night_shifts', 'professional_roles', 'accept_incomplete_resumes', 'experience', 'employment', 'employment_form', 'internship', 'adv_response_url', 'is_adv_vacancy', 'adv_context'])
+# In[30]:
 
 
-# In[187]:
+class VacancySkillsClass():
+    """
+    """
+    def __init__(self):
+        """
+        """
+        self.__clr = lambda x: (re.sub(r'<.*?>', '', str(x)))
+
+        self.__id_list     = list()
+        self.__area_list   = list()
+        self.__descr_list  = list()
+        self.__salary_from_list = list()
+        self.__salary_to_list   = list()
+        self.__salary_cur_list  = list()
+        self.__key_skills_list  = list()
+        
+        self.__date_list = list()
+        pass
 
 
-get_ipython().run_cell_magic('time', '', '\nid_list     = list()\narea_list   = list()\ndescr_list  = list()\nsalary_from_list = list()\nsalary_to_list   = list()\nsalary_cur_list  = list()\nkey_skills_list  = list()\n\ndate_list = list()\n\nbreaks_count = 0\n\nfor element in vacancies_list:\n    new_ones = 0\n    \n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n        \n    print(answ.url)\n    time.sleep(1)\n    \n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n    \n    # amnt_pages\n    for page in tqdm(range(amnt_pages)):\n        # going through all pages\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n        \n        #len(info_tag_page)\n        for vac in range( len(info_tag_page) ):\n            #going through all vacancies on pages \n            if info_tag_page[vac][\'id\'] in id_list:\n                break\n            \n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac][\'id\'])\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                continue\n            vacancy = answ.json()\n            \n            id_list.append(vacancy[\'id\'])\n            \n            if isinstance(vacancy[\'area\'], type(None)):\n                area_list.append(\'\')\n            else:\n                area_list.append(  vacancy[\'area\'][\'name\'].lower())  # id name\n            \n            if isinstance(vacancy[\'description\'], type(None)):\n                descr_list.append(\'\')\n            else:\n                descr_list.append(  clr(vacancy[\'description\']).lower())  # id name\n            \n            \n            if isinstance(vacancy[\'salary\'], type(None)):\n                salary_from_list.append( None )   # from to\n                salary_to_list.append(   None )   # from to\n                salary_cur_list.append(  None )\n            else:\n                salary_from_list.append( vacancy[\'salary\'][\'from\']) # from to\n                salary_to_list.append(   vacancy[\'salary\'][\'to\'])   # from to\n                salary_cur_list.append(  vacancy[\'salary\'][\'currency\'].lower())\n            \n                        \n            #if len(vacancy[\'key_skills\']) > 0:\n            #    for skill in range( len(vacancy[\'key_skills\']) ):   # name name name name.....\n            #        key_skills_list.append(  vacancy[\'key_skills\'][skill][\'name\'].lower())\n            key_skills_list.append(  vacancy[\'key_skills\'] )   \n            \n            date_list.append( parse(vacancy[\'published_at\'], ignoretz = True) )\n            new_ones += 1\n                   \n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n    \n    \nprint(\'\\nDone\')')
+    def __clear_spec_simbols(self, inp_str: str):
+        """
+        """
+        return self.__clr(inp_str_)
+
 
 
 # In[ ]:
@@ -93,6 +141,21 @@ get_ipython().run_cell_magic('time', '', '\nid_list     = list()\narea_list   = 
 
 
 
+# ### Забираем данные по вакансиям с hh
+
+# In[32]:
+
+
+skills = VacancySkillsClass()
+
+
+# In[187]:
+
+
+get_ipython().run_cell_magic('time', '', '\nbreaks_count = 0\n\n# going through all vacancies name\nfor element in vacancies_list:\n    new_ones = 0\n    \n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n        \n    print(answ.url)\n    time.sleep(1)\n    \n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n    \n    # going through all pages\n    for page in tqdm(range(amnt_pages)):\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n\n\n        #id_list\n        #area_list\n        #descr_list\n        #salary_from_list\n        #salary_to_list\n        #salary_cur_list\n        #key_skills_list\n\n        #going through all vacancies on page\n        for vac in range( len(info_tag_page) ):\n            if info_tag_page[vac][\'id\'] in id_list:\n                break\n            \n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac][\'id\'])\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                continue\n            vacancy = answ.json()\n            \n            id_list.append(vacancy[\'id\'])\n            \n            if isinstance(vacancy[\'area\'], type(None)):\n                area_list.append(\'\')\n            else:\n                area_list.append(  vacancy[\'area\'][\'name\'].lower())  # id name\n            \n            if isinstance(vacancy[\'description\'], type(None)):\n                descr_list.append(\'\')\n            else:\n                descr_list.append(  clr(vacancy[\'description\']).lower())  # id name\n            \n            \n            if isinstance(vacancy[\'salary\'], type(None)):\n                salary_from_list.append( None )   # from to\n                salary_to_list.append(   None )   # from to\n                salary_cur_list.append(  None )\n            else:\n                salary_from_list.append( vacancy[\'salary\'][\'from\']) # from to\n                salary_to_list.append(   vacancy[\'salary\'][\'to\'])   # from to\n                salary_cur_list.append(  vacancy[\'salary\'][\'currency\'].lower())\n            \n                        \n            #if len(vacancy[\'key_skills\']) > 0:\n            #    for skill in range( len(vacancy[\'key_skills\']) ):   # name name name name.....\n            #        key_skills_list.append(  vacancy[\'key_skills\'][skill][\'name\'].lower())\n            key_skills_list.append(  vacancy[\'key_skills\'] )   \n            \n            date_list.append( parse(vacancy[\'published_at\'], ignoretz = True) )\n            new_ones += 1\n                   \n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n    \n    \nprint(\'\\nDone\')\n')
+
+answ_pages.json()['items'][0].keys()
+dict_keys(['id', 'premium', 'name', 'department', 'has_test', 'response_letter_required', 'area', 'salary', 'salary_range', 'type', 'address', 'response_url', 'sort_point_distance', 'published_at', 'created_at', 'archived', 'apply_alternate_url', 'branding', 'show_logo_in_search', 'show_contacts', 'insider_interview', 'url', 'alternate_url', 'relations', 'employer', 'snippet', 'contacts', 'schedule', 'working_days', 'working_time_intervals', 'working_time_modes', 'accept_temporary', 'fly_in_fly_out_duration', 'work_format', 'working_hours', 'work_schedule_by_days', 'night_shifts', 'professional_roles', 'accept_incomplete_resumes', 'experience', 'employment', 'employment_form', 'internship', 'adv_response_url', 'is_adv_vacancy', 'adv_context'])
 # ### Зачищаем вакансии так, что бы при наличии в одной вакансии нескольких библиотек js, оставался бы только один js. и т.п.
 
 # In[188]:
