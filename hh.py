@@ -26,16 +26,16 @@ import pandas as pd
 # In[2]:
 
 
-#dir(requests)
 
 
-# In[3]:
+
+# In[2]:
 
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# In[31]:
+# In[3]:
 
 
 BREAK_STOP_LEVEL = 3
@@ -45,17 +45,18 @@ BREAK_STOP_LEVEL = 3
 
 
 addr = 'https://api.hh.ru/vacancies'
-head = {'User-Agent': 'StudyApp/0.0.1'}
+head = {'User-Agent': 'NoApp StudyPro/0.0.1'}
 
 
 # In[5]:
 
 
 vacancies_list = ['Data scientist',
-                  'Data science', 
-                  'Machine learning', 
+                  'Data science',
+                  'Дата Саентист',
+                  'Machine learning',
                   'ML',
-                  'Ml-engeneer', 
+                  'Ml-engeneer',
                   'CV-engeneer',
                   'NLP',
                  ]
@@ -104,8 +105,8 @@ answ.json()['pages']
 # 'key_skills': [{'name': 'Мат стат'}, {'name': 'Мат анализ'}, {'name': 'Python'}, {'name': 'Git'}]     
 # 'published_at': YYYY-MM-DDThh:mm:ss±hhmm
 answ_pages.json()['items'][0].keys()
-dict_keys(['id', 'premium', 'name', 'department', 'has_test', 'response_letter_required', 'area', 'salary', 'salary_range', 'type', 'address', 'response_url', 'sort_point_distance', 'published_at', 'created_at', 'archived', 'apply_alternate_url', 'branding', 'show_logo_in_search', 'show_contacts', 'insider_interview', 'url', 'alternate_url', 'relations', 'employer', 'snippet', 'contacts', 'schedule', 'working_days', 'working_time_intervals', 'working_time_modes', 'accept_temporary', 'fly_in_fly_out_duration', 'work_format', 'working_hours', 'work_schedule_by_days', 'night_shifts', 'professional_roles', 'accept_incomplete_resumes', 'experience', 'employment', 'employment_form', 'internship', 'adv_response_url', 'is_adv_vacancy', 'adv_context'])
-# In[30]:
+'id', 'premium', 'billing_type', 'relations', 'name', 'insider_interview', 'response_letter_required', 'area', 'salary', 'salary_range', 'type', 'address', 'allow_messages', 'experience', 'schedule', 'employment', 'department', 'show_contacts', 'contacts', 'description', 'branded_description', 'vacancy_constructor_template', 'key_skills', 'accept_handicapped', 'accept_kids', 'archived', 'response_url', 'specializations', 'professional_roles', 'code', 'hidden', 'quick_responses_allowed', 'driver_license_types', 'accept_incomplete_resumes', 'employer', 'published_at', 'created_at', 'initial_created_at', 'negotiations_url', 'suitable_resumes_url', 'apply_alternate_url', 'has_test', 'test', 'alternate_url', 'working_days', 'working_time_intervals', 'working_time_modes', 'accept_temporary', 'languages', 'approved', 'employment_form', 'fly_in_fly_out_duration', 'internship', 'night_shifts', 'work_format', 'work_schedule_by_days', 'working_hours', 'show_logo_in_search'
+# In[31]:
 
 
 class VacancySkillsClass():
@@ -116,15 +117,66 @@ class VacancySkillsClass():
         """
         self.__clr = lambda x: (re.sub(r'<.*?>', '', str(x)))
 
-        self.__id_list     = list()
+        self.__all_id_list  = list()
+        self.__new_id_list  = list()
         self.__area_list   = list()
         self.__descr_list  = list()
         self.__salary_from_list = list()
         self.__salary_to_list   = list()
         self.__salary_cur_list  = list()
+        #self.__key_skills_list  = list()
+        
+        self.__date_list = list()
+        pass
+
+
+    def __clear_spec_simbols(self, inp_str: str) -> str:
+        """
+        """
+        return self.__clr(inp_str_)
+
+
+    def check_id(self, inp_id) -< bool:
+        """
+        """
+        return inp_id in self.__all_id_list
+
+
+    def collect_data(self, inp_vacancy: dict) -> None:
+        """
+        """
+        #self.__all_id_list.add(inp_vacancy['id'])
+        
+        self.__new_id.append(inp_vacancy['id'])
+        self.__vac_name.append(inp_vacancy['name'])
+        descr = self.__clear_spec_simbols(inp_vacancy['description'])
+        self.__descr.append(descr)
+        self.__role.append(inp_vacancy['professional_roles']['name'])
+        self.__experience.append(inp_vacancy['experience']['id'])
+        self.__date_created.append(inp_vacancy['created_at'])
+        self.__date_published.append(inp_vacancy['published_at'])
+        self.__salary_cur.append(inp_vacancy['salary'])
+        #skills.salary_from_list
+        #skills.salary_to_list
+        self.__url.append(inp_vacancy['alternate_url'])
+        self.__area.append(inp_vacancy['area']['name'])
+
+
+
+class VacancyClass():
+    """
+    """
+    def __init__(self):
+        """
+        """
+        self.__clr = lambda x: (re.sub(r'<.*?>', '', str(x)))
+
+        self.__id_list     = list()
+        
         self.__key_skills_list  = list()
         
         self.__date_list = list()
+        
         pass
 
 
@@ -135,6 +187,24 @@ class VacancySkillsClass():
 
 
 
+
+#_grade
+__new_id = ['id']
+__vac_name = ['name']
+__area = ['area']['name']
+__experience = ['experience']['id']
+__role = ['professional_roles']['name']
+skills.__date_created = ['created_at']
+__date_published = ['published_at']
+skills.__descr = ['description']
+skills.__all_id_list = ['id']
+#skills.key_skills_list
+skills.__salary_cur = ['salary']
+#skills.salary_from_list
+#skills.salary_to_list
+__url = ['alternate_url']
+
+
 # In[ ]:
 
 
@@ -143,16 +213,134 @@ class VacancySkillsClass():
 
 # ### Забираем данные по вакансиям с hh
 
-# In[32]:
+# In[17]:
 
 
 skills = VacancySkillsClass()
 
 
-# In[187]:
+# In[13]:
 
 
-get_ipython().run_cell_magic('time', '', '\nbreaks_count = 0\n\n# going through all vacancies name\nfor element in vacancies_list:\n    new_ones = 0\n    \n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n        \n    print(answ.url)\n    time.sleep(1)\n    \n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n    \n    # going through all pages\n    for page in tqdm(range(amnt_pages)):\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n\n\n        #id_list\n        #area_list\n        #descr_list\n        #salary_from_list\n        #salary_to_list\n        #salary_cur_list\n        #key_skills_list\n\n        #going through all vacancies on page\n        for vac in range( len(info_tag_page) ):\n            if info_tag_page[vac][\'id\'] in id_list:\n                break\n            \n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac][\'id\'])\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                continue\n            vacancy = answ.json()\n            \n            id_list.append(vacancy[\'id\'])\n            \n            if isinstance(vacancy[\'area\'], type(None)):\n                area_list.append(\'\')\n            else:\n                area_list.append(  vacancy[\'area\'][\'name\'].lower())  # id name\n            \n            if isinstance(vacancy[\'description\'], type(None)):\n                descr_list.append(\'\')\n            else:\n                descr_list.append(  clr(vacancy[\'description\']).lower())  # id name\n            \n            \n            if isinstance(vacancy[\'salary\'], type(None)):\n                salary_from_list.append( None )   # from to\n                salary_to_list.append(   None )   # from to\n                salary_cur_list.append(  None )\n            else:\n                salary_from_list.append( vacancy[\'salary\'][\'from\']) # from to\n                salary_to_list.append(   vacancy[\'salary\'][\'to\'])   # from to\n                salary_cur_list.append(  vacancy[\'salary\'][\'currency\'].lower())\n            \n                        \n            #if len(vacancy[\'key_skills\']) > 0:\n            #    for skill in range( len(vacancy[\'key_skills\']) ):   # name name name name.....\n            #        key_skills_list.append(  vacancy[\'key_skills\'][skill][\'name\'].lower())\n            key_skills_list.append(  vacancy[\'key_skills\'] )   \n            \n            date_list.append( parse(vacancy[\'published_at\'], ignoretz = True) )\n            new_ones += 1\n                   \n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n    \n    \nprint(\'\\nDone\')\n')
+element = vacancies_list[0]
+
+try:
+    answ = requests.get(addr, params={'text':element}, headers = head)
+    if answ.status_code != 200:
+        print('Error get info with ' + element + ' tag')
+except:
+    print('exception try to get list of vacansies for profession')
+    breaks_count += 1
+    print('end')
+
+
+info_tag = answ.json()
+amnt_pages = info_tag['pages']
+amnt_found = info_tag['found']
+
+print('stage 1')
+
+page = 0
+try:
+    page = requests.get(addr, params={'text':element, 'page':page}, headers = head)
+    print(page.status_code)
+    if page.status_code != 200:
+        print('Error get info with ' + element + ' tag on page ' + str(page))
+except:
+    print(f'exception try to get next list of vacansies for {element}')
+    breaks_count += 1
+    
+info_tag_page = page.json()
+info_tag_page = info_tag_page['items']
+
+#going through all vacancies on page
+vac_idx = 0
+try:
+    #print(info_tag_page[vac]['id'])
+    vacancy = requests.get(addr + '/' + info_tag_page[vac_idx]['id'], headers = head)
+    if vacancy.status_code != 200:
+        print('Error get info about vacancia ' + info_tag_page[going]['id'])
+except:
+    print('exception try to get vacancy description')
+    breaks_count += 1
+
+
+
+# In[19]:
+
+
+__new_id = ['id']
+__vac_name = ['name']
+__area = ['area']['name']
+__experience = ['experience']['id']
+__role = ['professional_roles']['name']
+skills.__date_created = ['created_at']
+__date_published = ['published_at']
+skills.__descr = ['description']
+skills.__all_id_list = ['id']
+#skills.key_skills_list
+skills.__salary_cur = ['salary']
+#skills.salary_from_list
+#skills.salary_to_list
+__url = ['alternate_url']
+
+
+'salary_range'
+
+
+# In[21]:
+
+
+vacancy.json()
+
+
+# In[ ]:
+
+
+
+
+
+# In[30]:
+
+
+get_ipython().run_cell_magic('time', '', '\nid_list = list()\nbreaks_count = 0\n\n# going through all vacancies name\n#for element in vacancies_list:\nfor element in [vacancies_list[0]]:\n    new_ones = 0\n    \n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n        \n    print(answ.url)\n    time.sleep(1)\n    \n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n    \n    # going through all pages\n    #for page in tqdm(range(amnt_pages)):\n    for page in tqdm(range(2)):\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n\n\n        #id_list\n        #area_list\n        #descr_list\n        #salary_from_list\n        #salary_to_list\n        #salary_cur_list\n        #key_skills_list\n\n        #going through all vacancies on page\n        for vac_idx in range( len(info_tag_page) ):\n            if info_tag_page[vac_idx][\'id\'] in id_list:\n                break\n            \n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac_idx][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac_idx][\'id\'])\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                continue\n            vacancy = answ.json()\n            \n            id_list.append(vacancy[\'id\'])\n\n\n            #if not isinstance(vacancy[\'salary\'], type(None)):\n            #    print(\'salary \', vacancy[\'salary\'])\n\n            #if not isinstance(vacancy[\'salary_range\'], type(None)):\n            #    print(\'salary_range \', vacancy[\'salary_range\'])\n\n            new_ones += 1\n                   \n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n    \n    \nprint(\'\\nDone\')\n')
+
+Стажер Младший Руководитель Директор Тимлид
+Intern Junior Middle Senior Head
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[39]:
+
+
+get_ipython().run_cell_magic('time', '', '\nbreaks_count = 0\n\n# going through all vacancies name\nfor element in vacancies_list:\n    new_ones = 0\n    \n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n        \n    print(answ.url)\n    time.sleep(1)\n    \n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n    \n    # going through all pages\n    for page in tqdm(range(amnt_pages)):\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n\n\n        #id_list\n        #area_list\n        #descr_list\n        #salary_from_list\n        #salary_to_list\n        #salary_cur_list\n        #key_skills_list\n\n        #going through all vacancies on page\n        for vac in range( len(info_tag_page) ):\n            if info_tag_page[vac][\'id\'] in skills.__id_list:\n                break\n            \n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac][\'id\'])\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                continue\n            vacancy = answ.json()\n            \n            skills.id_list.append(vacancy[\'id\'])\n            \n            if isinstance(vacancy[\'area\'], type(None)):\n                skills.area_list.append(\'\')\n            else:\n                skills.area_list.append(  vacancy[\'area\'][\'name\'].lower())  # id name\n            \n            if isinstance(vacancy[\'description\'], type(None)):\n                skills.descr_list.append(\'\')\n            else:\n                skills.descr_list.append(  clr(vacancy[\'description\']).lower())  # id name\n            \n            \n            if isinstance(vacancy[\'salary\'], type(None)):\n                skills.salary_from_list.append( None )   # from to\n                skills.salary_to_list.append(   None )   # from to\n                skills.salary_cur_list.append(  None )\n            else:\n                skills.salary_from_list.append( vacancy[\'salary\'][\'from\']) # from to\n                skills.salary_to_list.append(   vacancy[\'salary\'][\'to\'])   # from to\n                skills.salary_cur_list.append(  vacancy[\'salary\'][\'currency\'].lower())\n            \n                        \n            #if len(vacancy[\'key_skills\']) > 0:\n            #    for skill in range( len(vacancy[\'key_skills\']) ):   # name name name name.....\n            #        key_skills_list.append(  vacancy[\'key_skills\'][skill][\'name\'].lower())\n            skills.key_skills_list.append(  vacancy[\'key_skills\'] )   \n            \n            skills.date_list.append( parse(vacancy[\'published_at\'], ignoretz = True) )\n            new_ones += 1\n                   \n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n    \n    \nprint(\'\\nDone\')\n')
 
 answ_pages.json()['items'][0].keys()
 dict_keys(['id', 'premium', 'name', 'department', 'has_test', 'response_letter_required', 'area', 'salary', 'salary_range', 'type', 'address', 'response_url', 'sort_point_distance', 'published_at', 'created_at', 'archived', 'apply_alternate_url', 'branding', 'show_logo_in_search', 'show_contacts', 'insider_interview', 'url', 'alternate_url', 'relations', 'employer', 'snippet', 'contacts', 'schedule', 'working_days', 'working_time_intervals', 'working_time_modes', 'accept_temporary', 'fly_in_fly_out_duration', 'work_format', 'working_hours', 'work_schedule_by_days', 'night_shifts', 'professional_roles', 'accept_incomplete_resumes', 'experience', 'employment', 'employment_form', 'internship', 'adv_response_url', 'is_adv_vacancy', 'adv_context'])
