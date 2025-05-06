@@ -15,14 +15,11 @@ import os
 import requests
 import time
 from tqdm.notebook import tqdm
-#from datetime import datetime
-#from dateutil.parser import parse
 
 import re
 from collections import Counter
 
 import polars as pl
-#import pandas as pd
 
 
 # In[ ]:
@@ -51,7 +48,7 @@ addr = 'https://api.hh.ru/vacancies'
 head = {'User-Agent': 'NoApp StudyPro/0.9.1'}
 
 
-# In[13]:
+# In[5]:
 
 
 vacancies_list = ['Data scientist',
@@ -63,6 +60,14 @@ vacancies_list = ['Data scientist',
                   'CV-engeneer',
                   'NLP',
                  ]
+
+enabled_professional_roles = set([
+    'Дата-сайентист', 'Программист, разработчик', 'Аналитик', 'Другое',
+    'BI-аналитик, аналитик данных', 'Научный специалист, исследователь',
+    'Специалист по информационной безопасности', 
+    'Директор по информационным технологиям (CIO)', 'Технический директор (CTO)',
+    'Финансовый аналитик, инвестиционный аналитик'
+                                 ])
 
 
 # In[ ]:
@@ -362,7 +367,7 @@ skills = VacancySkillsClass()
 # In[8]:
 
 
-get_ipython().run_cell_magic('time', '', 'vacancy.reset()\nskills.reset()\nbreaks_count = 0\n\n# going through all vacancies name\nfor element in vacancies_list:\n#for element in [vacancies_list[0]]:\n    new_ones = 0\n    \n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n        \n    print(answ.url)\n    time.sleep(1)\n    \n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n    \n    # going through all pages\n    for page in tqdm(range(amnt_pages)):\n    #for page in tqdm(range(4)):\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n\n        #going through all vacancies on page\n        for vac_idx in range( len(info_tag_page) ):\n            if vacancy.check_id(info_tag_page[vac_idx][\'id\']):\n                break\n            \n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac_idx][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac_idx][\'id\'] +\\\n                          \'code \' + answ.status_code)\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                continue\n            vac = answ.json()\n            \n            vacancy.collect_data(vac)\n            skills.collect_skills(vac)\n            vacancy.add_id(info_tag_page[vac_idx][\'id\'])\n            new_ones += 1\n\n            time.sleep(0.37)\n    \n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n\nskills.saveskills()\nvacancy.savevacancies()\nprint(\'\\nDone\')\n')
+get_ipython().run_cell_magic('time', '', 'vacancy.reset()\nskills.reset()\nbreaks_count = 0\n\n# going through all vacancies name\nfor element in vacancies_list:\n#for element in [vacancies_list[0]]:\n    new_ones = 0\n\n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n\n    print(answ.url)\n    time.sleep(1)\n\n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n\n    # going through all pages\n    for page in tqdm(range(amnt_pages)):\n    #for page in tqdm(range(4)):\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n\n        #print(hahahaha)\n        #going through all vacancies on page\n        for vac_idx in range( len(info_tag_page) ):\n            if vacancy.check_id(info_tag_page[vac_idx][\'id\']):\n                break\n\n            role = info_tag_page[vac_idx][\'professional_roles\'][0][\'name\']\n            if not role in enabled_professional_roles:\n                break\n\n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac_idx][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac_idx][\'id\'] +\\\n                          \'code \' + answ.status_code)\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                continue\n            vac = answ.json()\n\n            vacancy.collect_data(vac)\n            skills.collect_skills(vac)\n            vacancy.add_id(info_tag_page[vac_idx][\'id\'])\n            new_ones += 1\n\n            time.sleep(0.37)\n\n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n\nskills.saveskills()\nvacancy.savevacancies()\nprint(\'\\nDone\')\n')
 
 
 # In[ ]:
@@ -377,10 +382,10 @@ get_ipython().run_cell_magic('time', '', 'vacancy.reset()\nskills.reset()\nbreak
 
 
 
-# In[11]:
+# In[19]:
 
 
-info_tag_page
+#info_tag_page
 
 
 # In[ ]:
