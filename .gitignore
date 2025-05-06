@@ -2,7 +2,7 @@
 __pycache__/
 
 downloads/
-
+data/*
 
 # Jupyter Notebook
 .ipynb_checkpoints
