@@ -51,7 +51,7 @@ addr = 'https://api.hh.ru/vacancies'
 head = {'User-Agent': 'NoApp StudyPro/0.9.1'}
 
 
-# In[5]:
+# In[13]:
 
 
 vacancies_list = ['Data scientist',
@@ -191,7 +191,8 @@ class VacancyClass(UtilityClass):
         """
         self.__new_id.append(int(inp_vacancy['id']))
         self.__vac_name.append(inp_vacancy['name'].lower())
-        descr = self._clr(inp_vacancy['description'])
+        #descr = self._clr(inp_vacancy['description'])
+        descr = inp_vacancy['description']
         self.__descr.append(descr)
         self.__role.append(inp_vacancy['professional_roles'][0]['name'])
         self.__experience.append(inp_vacancy['experience']['id'])
@@ -374,6 +375,12 @@ get_ipython().run_cell_magic('time', '', 'vacancy.reset()\nskills.reset()\nbreak
 
 
 
+
+
+# In[11]:
+
+
+info_tag_page
 
 
 # In[ ]:
