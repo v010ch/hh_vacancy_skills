@@ -353,7 +353,7 @@ class VacancySkillsClass(UtilityClass):
                     'date_published': self.__date_published,
                          })
         new_data = new_data.with_columns(
-            pl.col('vacancy_name').map_elements(self._grade, return_dtype=pl.String).\
+            pl.struct('vacancy_name', 'experience').map_elements(self._grade, return_dtype=pl.String).\
                 alias('grade'),
             #pl.col('vacancy_id').cast(pl.Int64)),
             )
