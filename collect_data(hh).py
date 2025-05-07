@@ -45,7 +45,7 @@ DATA_PATH = os.path.join('.', 'data')
 
 
 addr = 'https://api.hh.ru/vacancies'
-head = {'User-Agent': 'NoApp StudyPro/0.9.1'}
+head = {'User-Agent': 'NoApp StudyPro/0.9.5'}
 
 
 # In[5]:
@@ -82,13 +82,11 @@ enabled_professional_roles = set([
 # 'key_skills': [{'name': 'Мат стат'}, {'name': 'Мат анализ'}, {'name': 'Python'}, {'name': 'Git'}]     
 # 'published_at': YYYY-MM-DDThh:mm:ss±hhmm
 answ_pages.json()['items'][0].keys()
-'id', 'premium', 'billing_type', 'relations', 'name', 'insider_interview', 'response_letter_required', 'area', 'salary', 'salary_range', 'type', 'address', 'allow_messages', 'experience', 'schedule', 'employment', 'department', 'show_contacts', 'contacts', 'description', 'branded_description', 'vacancy_constructor_template', 'key_skills', 'accept_handicapped', 'accept_kids', 'archived', 'response_url', 'specializations', 'professional_roles', 'code', 'hidden', 'quick_responses_allowed', 'driver_license_types', 'accept_incomplete_resumes', 'employer', 'published_at', 'created_at', 'initial_created_at', 'negotiations_url', 'suitable_resumes_url', 'apply_alternate_url', 'has_test', 'test', 'alternate_url', 'working_days', 'working_time_intervals', 'working_time_modes', 'accept_temporary', 'languages', 'approved', 'employment_form', 'fly_in_fly_out_duration', 'internship', 'night_shifts', 'work_format', 'work_schedule_by_days', 'working_hours', 'show_logo_in_search'
-# In[ ]:
-
-
-
-
-
+'id', 'premium', 'billing_type', 'relations', 'name', 'insider_interview', 'response_letter_required', 'area', 'salary', 'salary_range', 'type', 'address', 'allow_messages', 'experience', 'schedule', 'employment', 'department', 'show_contacts', 'contacts', 'description', 'branded_description', 'vacancy_constructor_template', 'key_skills', 'accept_handicapped', 'accept_kids', 'archived', 'response_url', 'specializations', 'professional_roles', 'code', 'hidden', 'quick_responses_allowed', 'driver_license_types', 'accept_incomplete_resumes', 'employer', 'published_at', 'created_at', 'initial_created_at', 'negotiations_url', 'suitable_resumes_url', 'apply_alternate_url', 'has_test', 'test', 'alternate_url', 'working_days', 'working_time_intervals', 'working_time_modes', 'accept_temporary', 'languages', 'approved', 'employment_form', 'fly_in_fly_out_duration', 'internship', 'night_shifts', 'work_format', 'work_schedule_by_days', 'working_hours', 'show_logo_in_search'"intern"	"noExperience"	7     "between1And3"	1     
+"junior"	"noExperience"	3     "between1And3"	14      "between3And6"	1     
+"middle"	                      "between1And3"	11      "between3And6"	17      "moreThan6"	    3
+"senior"	                      "between1And3"	4       "between3And6"	50      "moreThan6"	    5
+"head"	                          "between1And3"	2	    "between3And6"	6       "moreThan6"	    1
 # In[6]:
 
 
@@ -99,37 +97,65 @@ class UtilityClass():
         self._clr = lambda x: (re.sub(r'[<>.,_+*?!/()]', ' ', str(x))).strip().lower()
 
 
-    def _grade(self, inp_vac_name: str) -> str:
+    def _grade(self, inp_vals: dict) -> str:
         """
         """
-        name = self._clr(inp_vac_name)
-
+        name = self._clr(inp_vals['vacancy_name'])
+    
+        if 'intern' in name and\
+           'junior' in name:
+            return 'intern/junior'
+    
+        if 'junior' in name and\
+           'middle' in name:
+            return 'junior/middle'
+    
+        if 'middle' in name and\
+           'senior' in name:
+            return 'middle/senior'
+    
         if 'стажер' in name or\
            'стажёр' in name or\
            'intern' in name:
             return 'intern'
-
+    
         if 'junior' in name or\
            'младший' in name:
             return 'junior'
-
+    
         if 'middle' in name:
             return 'middle'
-
+    
         if 'старший' in name or\
            'senior' in name:
             return 'senior'
-
+    
         if 'head' in name or\
            'директор' in name or\
            'руководитель' in name:
             return 'head'
-
+    
         if 'leader' in name or\
            'лидер' in name:
             return 'team-leader'
-
-        return 'unknown' # middle?
+    
+        #without grade in headder
+        #analysing experience
+        experience = inp_vals['experience'].lower()
+        if experience == 'noexperience':
+            return 'intern'
+    
+        if experience == 'between1and3':
+            return 'junior'
+    
+        if experience == 'between3and6':    #or senior. think senior should be at header
+            return 'middle'
+    
+        if experience == 'morethan6':
+            return 'senior'
+    
+        #print(name, experience)
+        return 'unknown' # cann't be here
 
 
     def _salary(self, inp_salary: dict) -> tuple:
@@ -255,7 +281,7 @@ class VacancyClass(UtilityClass):
                     'description': self.__descr,
                          })
         new_data = new_data.with_columns(
-            pl.col('vacancy_name').map_elements(self._grade, return_dtype=pl.String).\
+            pl.struct('vacancy_name', 'experience').map_elements(self._grade, return_dtype=pl.String).\
                 alias('grade'),
             #pl.col('vacancy_id').cast(pl.Int64)),
         )
