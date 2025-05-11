@@ -22,7 +22,7 @@ app = Dash()
 def load_and_prepare_data() -> pl.DataFrame:
     """
     """
-    ret_df = pl.read_csv(os.path.join(DATA_PATH, 'vacancies.csv'),
+    ret_df = pl.read_csv(os.path.join(DATA_PATH, 'vacancies_prepared.csv'),
                          try_parse_dates=True,
                          )
     ret_df = ret_df.with_columns(
@@ -81,34 +81,6 @@ def time_graph():
     return fig
 
 
-vacancies = load_and_prepare_data()
-fig_pies = pie_graphs(vacancies)
-# fig_time = time_graph()
-
-app.layout = [
-    html.H1('Yes!'),
-    html.Br(),
-    html.Div(children=[dcc.Graph(figure=fig_pies)]
-             ),
-    # dcc.Graph(figure=fig_time),
-    html.Br(),
-    dcc.Graph(figure={}, id='time_graph'),
-    html.P("Отображать по периоду:"),
-    dcc.Dropdown(id='by_period',
-                 options=['День', 'Неделя', 'Месяц',],
-                 value='День', clearable=False,
-                 ),
-    html.P("Отображать по грейду:"),
-    dcc.Dropdown(id='by_grade', 
-                 options=['Суммарно', 'По грейдам'],
-                 value='Суммарно', clearable=False,
-                 ),
-    html.Br(),
-    html.Br(),
-    html.Br(),
-]
-
-
 @app.callback(
     Output(component_id='time_graph', component_property='figure'),
     Input(component_id='by_period', component_property='value'),
@@ -147,6 +119,35 @@ def cnt_vacancies(by_period: str, by_grade: str):
                       height=600)
 
     return fig
+
+
+vacancies = load_and_prepare_data()
+fig_pies = pie_graphs(vacancies)
+# fig_time = time_graph()
+
+app.layout = [
+    html.H1('Yes!'),
+    html.Br(),
+    html.Div(children=[dcc.Graph(figure=fig_pies)]
+             ),
+    # dcc.Graph(figure=fig_time),
+    html.Br(),
+    dcc.Graph(figure={}, id='time_graph'),
+    html.P("Отображать по периоду:"),
+    dcc.Dropdown(id='by_period',
+                 options=['День', 'Неделя', 'Месяц',],
+                 value='День', clearable=False,
+                 ),
+    html.P("Отображать по грейду:"),
+    dcc.Dropdown(id='by_grade', 
+                 options=['Суммарно', 'По грейдам'],
+                 value='Суммарно', clearable=False,
+                 ),
+    html.Br(),
+    html.Br(),
+    html.Br(),
+]
+
 
 
 if __name__ == '__main__':

@@ -104,7 +104,7 @@ plt.plot(tmp['date'], tmp['vacancy_id'],)
 plt.title('Кол-во вакансий по дням')
 
 
-# In[48]:
+# In[49]:
 
 
 tmp = vacancies.group_by(['date', 'grade']).agg(pl.col('vacancy_id').count()).sort(by='date')
@@ -261,16 +261,16 @@ fig.show()
 
 
 
-# In[ ]:
+# In[58]:
 
 
+vacancies.filter((pl.col('salary_from') != -1) | (pl.col('salary_to') != -1))['salary_currency'].value_counts()
 
 
-
-# In[ ]:
-
+# In[60]:
 
 
+vacancies['date_created'].min()
 
 
 # In[ ]:
