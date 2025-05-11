@@ -10,8 +10,8 @@ from plotly.subplots import make_subplots
 DATA_PATH = os.path.join('.', 'data')
 only_roles = set(['intern', 'junior', 'middle', 'senior', 'head'])
 color4 = ['gold', 'mediumturquoise', 'darkorange', 'lightgreen']
-color5 = ['gold', 'mediumturquoise', 'darkorange', 'lightgreen', 'darkmagenta']
-colors_grade = {'intern': 'gold', 'junior': 'magenta',
+color5 = ['gold', 'mediumturquoise', 'darkorange', 'lightgreen', 'coral']
+colors_grade = {'intern': 'gold', 'junior': 'lightcoral',
                 'middle': 'mediumturquoise', 'senior': 'darkorange', 
                 'head': 'lightgreen'
                 }
@@ -71,7 +71,7 @@ def pie_graphs(inp_df: pl.DataFrame):
     return two_in_one
 
 
-def time_graph():
+def scatter_time_graph():
     """
     """
     global vacancies
@@ -86,7 +86,7 @@ def time_graph():
     Input(component_id='by_period', component_property='value'),
     Input(component_id='by_grade', component_property='value'),
  )
-def cnt_vacancies(by_period: str, by_grade: str):
+def scatter_cnt_vacancies(by_period: str, by_grade: str):
     """
     """
     # global vacancies
@@ -121,12 +121,65 @@ def cnt_vacancies(by_period: str, by_grade: str):
     return fig
 
 
+def violin_salary(inp_df: pl.DataFrame):
+    """
+    """
+    roles = set(['intern', 'junior', 'middle', 'senior'])
+    fig = go.Figure()
+
+    tmp = inp_df.filter(pl.col('salary_from_rur') > 0)
+    tmp = tmp.filter(pl.col('grade').is_in(roles))
+    tmp = tmp[['date_created', 'grade', 'salary_from_rur',]]
+    fig.add_trace(go.Violin(x=tmp['grade'],
+                            y=tmp['salary_from_rur'], 
+                            line_color='black', fillcolor='mediumturquoise',
+                            opacity=0.8,
+                            legendgroup='from', scalegroup='from', name='от',
+                            side='negative',
+                            )
+                  )
+
+    tmp = inp_df.filter(pl.col('salary_to_rur') > 0)
+    tmp = tmp.filter(pl.col('grade').is_in(roles))
+    tmp = tmp[['date_created', 'grade', 'salary_to_rur',]]
+    fig.add_trace(go.Violin(x=tmp['grade'],
+                            y=tmp['salary_to_rur'], 
+                            line_color='black', fillcolor='gold',
+                            opacity=0.8,
+                            legendgroup='to', scalegroup='to', name='до',
+                            side='positive',
+                            )
+                  )
+    fig.update_traces(meanline_visible=True, 
+                      )
+    #fig.update_traces(textfont_size=20,
+    #                  marker=dict(colors=color5, line=dict(color='#000000', width=2)),
+    #                  )
+    fig.update_layout(
+                title_text='Разбивка всех зарплат по грейдам',
+                title_x=0.5,
+                # showlegend=True,
+                font=dict(size=18),
+                margin=dict(t=70, b=70, l=0, r=0),
+                width=1400, height=600,
+                )
+
+    return fig
+
+
 vacancies = load_and_prepare_data()
 fig_pies = pie_graphs(vacancies)
-# fig_time = time_graph()
+fig_violin_salary = violin_salary(vacancies)
+# fig_time = scatter_time_graph()
+
+
+min_date = str(vacancies['date_created'].min().date())
+max_date = str(vacancies['date_created'].max().date())
+header_text = 'Обзор вакансий data scientist/ML c hh.ru'\
+                + f' за период c {min_date} по {max_date}'
 
 app.layout = [
-    html.H1('Yes!'),
+    html.H1(header_text),
     html.Br(),
     html.Div(children=[dcc.Graph(figure=fig_pies)]
              ),
@@ -146,6 +199,8 @@ app.layout = [
     html.Br(),
     html.Br(),
     html.Br(),
+    html.Div(children=[dcc.Graph(figure=fig_violin_salary)]
+             ),
 ]
 
 
