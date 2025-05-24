@@ -28,19 +28,18 @@ from datetime import date
 DATA_PATH = os.path.join('.', 'data')
 
 
+# eur  https://www.val.ru/valhistory.asp?tool=978   
+# kzt  https://www.val.ru/valhistory.asp?tool=398   
+# usd  https://www.val.ru/valhistory.asp?tool=840   
+# byr  https://www.val.ru/valhistory.asp?tool=125396   
+
 # In[ ]:
 
 
 
 
 
-# In[ ]:
-
-
-
-
-
-# In[12]:
+# In[3]:
 
 
 def prepare_er(inp_df: pl.DataFrame, inp_curr: str) -> pl.DataFrame:
@@ -71,7 +70,7 @@ def prepare_er(inp_df: pl.DataFrame, inp_curr: str) -> pl.DataFrame:
     return inp_df
 
 
-# In[17]:
+# In[4]:
 
 
 er = pl.DataFrame(pl.date_range(date(2025, 4, 1), 
@@ -81,6 +80,7 @@ er = pl.DataFrame(pl.date_range(date(2025, 4, 1),
 er = prepare_er(er, 'usd')
 er = prepare_er(er, 'eur')
 er = prepare_er(er, 'kzt')
+er = prepare_er(er, 'byr')
 
 cols = er.columns
 cols[1] = 'er_usd'
@@ -93,7 +93,7 @@ er.columns = cols
 
 
 
-# In[24]:
+# In[5]:
 
 
 tmp_date = date(2025, 4, 5)
@@ -101,7 +101,7 @@ tmp_date = date(2025, 4, 5)
 er.filter(pl.col('date') == tmp_date)['er_usd'].item()
 
 
-# In[85]:
+# In[6]:
 
 
 def prepare_salary_from(inp_vals: dict) -> pl.Int64:
@@ -142,7 +142,7 @@ def prepare_salary_to(inp_vals: dict) -> pl.Int64:
     return int(s_to * exchange_rate)
 
 
-# In[86]:
+# In[7]:
 
 
 vacancies = pl.read_csv(os.path.join(DATA_PATH, 'vacancies.csv'), try_parse_dates=True)
@@ -156,22 +156,34 @@ vacancies = vacancies.with_columns(
 )
 
 
-# In[87]:
+# In[8]:
 
 
 #vacancies.columns
 
 
-# In[88]:
+# In[ ]:
 
 
 
 
 
-# In[101]:
+# In[9]:
 
 
 vacancies.write_csv(os.path.join(DATA_PATH, 'vacancies_prepared.csv'))
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
