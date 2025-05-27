@@ -1,32 +1,33 @@
-"""hh_vacancy dash app"""
+'''Дашборд для обзора вакансий'''
 
 import os
-from dash import register_page, callback, Dash, dcc, html, Output, Input
+from dash import register_page, callback, dcc, html, Output, Input
 import polars as pl
 from plotly import graph_objects as go
 from plotly.subplots import make_subplots
 
-#register_page(__name__,
-#              # path='/vacancies-dashboard',
-#              path='/',
-#              title='Our Analytics Dashboard',
-#              name='Обзор вакансий',
-#              )
+register_page(__name__,
+              path='/',
+              title='Vacancies Dashboard',
+              name='Обзор вакансий',
+              )
+
 
 DATA_PATH = os.path.join('.', 'data')
 only_roles = set(['intern', 'junior', 'middle', 'senior', 'head'])
 color4 = ['gold', 'mediumturquoise', 'darkorange', 'lightgreen']
 color5 = ['gold', 'mediumturquoise', 'darkorange', 'lightgreen', 'coral']
 colors_grade = {'intern': 'gold', 'junior': 'lightcoral',
-                'middle': 'mediumturquoise', 'senior': 'darkorange', 
+                'middle': 'mediumturquoise', 'senior': 'darkorange',
                 'head': 'lightgreen'
                 }
 
-# app = Dash()
 
 
 def load_and_prepare_data() -> pl.DataFrame:
     """
+    args
+    return
     """
     ret_df = pl.read_csv(os.path.join(DATA_PATH, 'vacancies_prepared.csv'),
                          try_parse_dates=True,
@@ -42,6 +43,8 @@ def load_and_prepare_data() -> pl.DataFrame:
 
 def pie_graphs(inp_df: pl.DataFrame):
     """
+    args
+    return
     """
     tmp = inp_df.filter(pl.col('grade').is_in(only_roles))\
         ['grade'].value_counts(normalize=True)
@@ -77,58 +80,10 @@ def pie_graphs(inp_df: pl.DataFrame):
     return two_in_one
 
 
-def scatter_time_graph():
-    """
-    """
-    global vacancies
-    tmp = vacancies.group_by('date').agg(pl.col('vacancy_id').count()).sort(by='date')
-    fig = go.Figure(data=go.Scatter(x=tmp['date'], y=tmp['vacancy_id']))
-
-    return fig
-
-
-@callback(
-    Output(component_id='time_graph', component_property='figure'),
-    Input(component_id='by_period', component_property='value'),
-    Input(component_id='by_grade', component_property='value'),
- )
-def scatter_cnt_vacancies(by_period: str, by_grade: str):
-    """
-    """
-    # global vacancies
-    #pediod_dict = {'День': 'date', 'Неделя': 'week', 'Месяц': 'month'}
-    ttl_word = {'date': 'дням', 'week': 'неделям', 'month': 'месяцам'}
-    ttl_incert = ttl_word[by_period]
-    #by_period = pediod_dict[by_period]
-
-    if by_grade == 'Суммарно':
-        ttl = f'Кол-во вакансий по {ttl_incert}'
-        tmp = vacancies.group_by(by_period).agg(pl.col('vacancy_id').count()).sort(by=by_period)
-        fig = go.Figure(data=go.Scatter(x=tmp[by_period], y=tmp['vacancy_id']))
-    else:
-        ttl = f'Кол-во вакансий по {ttl_incert} и грейдам'
-        fig = go.Figure()
-        tmp = vacancies.group_by([by_period, 'grade']).agg(pl.col('vacancy_id').count()).sort(by=by_period)
-        for el in ['intern', 'junior', 'middle', 'senior', 'head']:
-            tmp_grade = tmp.filter(pl.col('grade') == el).sort(by=by_period)
-            fig.add_trace(go.Scatter(x=tmp_grade[by_period],
-                                     y=tmp_grade['vacancy_id'],
-                                     line=dict(color=colors_grade[el],
-                                               width=2,
-                                               ),
-                                     name=el))
-
-    fig.update_layout(title_text=ttl,
-                      title_x=0.5,
-                      font=dict(size=18),
-                      width=1400,
-                      height=600)
-
-    return fig
-
-
 def violin_salary(inp_df: pl.DataFrame):
     """
+    args
+    return
     """
     roles = set(['intern', 'junior', 'middle', 'senior'])
     fig = go.Figure()
@@ -174,23 +129,21 @@ def violin_salary(inp_df: pl.DataFrame):
 
 
 vacancies = load_and_prepare_data()
-fig_pies = pie_graphs(vacancies)
-fig_violin_salary = violin_salary(vacancies)
-# fig_time = scatter_time_graph()
-
-
 min_date = str(vacancies['date_created'].min().date())
 max_date = str(vacancies['date_created'].max().date())
 header_text = 'Обзор вакансий data scientist/ML c hh.ru'\
                 + f' за период c {min_date} по {max_date}'
 
-layout = [
+fig_pies = pie_graphs(vacancies)
+fig_violin_salary = violin_salary(vacancies)
+
+
+layout = html.Div([
     html.H1(header_text),
     html.Br(),
     html.Div(children=[dcc.Graph(figure=fig_pies)]
              ),
     # dcc.Graph(figure=fig_time),
-    html.Br(),
     dcc.Graph(figure={}, id='time_graph'),
     html.P("Отображать по периоду:"),
     dcc.Dropdown(id='by_period',
@@ -211,9 +164,46 @@ layout = [
     html.Br(),
     html.Div(children=[dcc.Graph(figure=fig_violin_salary)]
              ),
-]  # style={"width": 200}
+])
 
 
-# if __name__ == '__main__':
-    # app.run(debug=True)
-#     app.run()
+@callback(
+    Output(component_id='time_graph', component_property='figure'),
+    Input(component_id='by_period', component_property='value'),
+    Input(component_id='by_grade', component_property='value'),
+ )
+def scatter_cnt_vacancies(by_period: str, by_grade: str):
+    """
+    args
+    return
+    """
+    # global vacancies
+    #pediod_dict = {'День': 'date', 'Неделя': 'week', 'Месяц': 'month'}
+    ttl_word = {'date': 'дням', 'week': 'неделям', 'month': 'месяцам'}
+    ttl_incert = ttl_word[by_period]
+    #by_period = pediod_dict[by_period]
+
+    if by_grade == 'Суммарно':
+        ttl = f'Кол-во вакансий по {ttl_incert}'
+        tmp = vacancies.group_by(by_period).agg(pl.col('vacancy_id').count()).sort(by=by_period)
+        fig = go.Figure(data=go.Scatter(x=tmp[by_period], y=tmp['vacancy_id']))
+    else:
+        ttl = f'Кол-во вакансий по {ttl_incert} и грейдам'
+        fig = go.Figure()
+        tmp = vacancies.group_by([by_period, 'grade']).agg(pl.col('vacancy_id').count()).sort(by=by_period)
+        for el in ['intern', 'junior', 'middle', 'senior', 'head']:
+            tmp_grade = tmp.filter(pl.col('grade') == el).sort(by=by_period)
+            fig.add_trace(go.Scatter(x=tmp_grade[by_period],
+                                     y=tmp_grade['vacancy_id'],
+                                     line=dict(color=colors_grade[el],
+                                               width=2,
+                                               ),
+                                     name=el))
+
+    fig.update_layout(title_text=ttl,
+                      title_x=0.5,
+                      font=dict(size=18),
+                      width=1400,
+                      height=600)
+
+    return fig
