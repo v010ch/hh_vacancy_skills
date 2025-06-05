@@ -1,4 +1,4 @@
-'''Дашборд для обзора ключевцх скилов'''
+'''Дашборд для обзора ключевых скилов'''
 
 import os
 from dash import register_page, callback, dash_table, dcc, html, Output, Input
@@ -7,7 +7,7 @@ from plotly import graph_objects as go
 from wordcloud import WordCloud
 
 register_page(__name__,
-              path="/skills_dashboard",
+              path='/skills_dashboard',
               title='Skills Dashboard',
               name='Обзор требуемых умений (скилов)',
               )
@@ -17,10 +17,11 @@ only_roles = set(['intern', 'junior', 'middle', 'senior', 'head'])
 
 
 def load_and_prepare_data() -> pl.DataFrame:
-    """
-    args
+    '''
+    Загрузка и преобразование исходных данных для отображения
     return
-    """
+        pl.DataFrame - подготовленные для отображения данные
+    '''
     ret_df = pl.read_csv(os.path.join(DATA_PATH, 'skills.csv'),
                          try_parse_dates=True,
                          )
@@ -44,19 +45,25 @@ layout = html.Div([
     html.H1(header_text),
     html.Br(),
 
+    # Блок отображения wordcloud скилов
     html.P("Отображать по грейду:"),
     dcc.Dropdown(id='by_grade',
                  options=['Суммарно', 'intern', 'junior', 'middle', 'senior'],
                  value='Суммарно', clearable=False,
                  ),
-    html.P("С учетом скилов:"),
+    html.P('С учетом скилов:'),
     dcc.Dropdown(id='exclude',
-                 options=['Всех', 'Без самых очевидных'],
-                 value='Всех', clearable=False,
+                 # options=['Всех', 'Без самых очевидных'],
+                 options=[{'label': 'Всех', 'value': False},
+                          {'label': 'Без самых очевидных', 'value': True},
+                          ],
+                 value=False, clearable=False,
                  ),
     dcc.Graph(figure={}, id='wordcloud'),
     html.Br(),
     html.Br(),
+
+    # Блок отображения таблицы скилов
     dcc.Dropdown(id='table_by_grade',
                  options=['Суммарно', 'intern', 'junior', 'middle', 'senior'],
                  value='Суммарно', clearable=False,
@@ -69,14 +76,18 @@ layout = html.Div([
     Input(component_id='by_grade', component_property='value'),
     Input(component_id='exclude', component_property='value'),
  )
-def figure_wordcloud(inp_grade: str, inp_exclude: str):
-    """
+def figure_wordcloud(inp_grade: str, inp_exclude: bool):
+    '''
+    Построение фигуры wordcloud по заданным параметрам и исходным данным
     args
+        inp_grade: str - грейд, для которого отображать wordcloud
+        inp_exclude: book - исключать самые очевидные скилы?
     return
-    """
-    to_exclude = set(['python', 'sql', 'pandas', 'data science', 'git', 
-                      'математическая статистика', 'numpy', 'big data', 
-                      'английский язык', 'it', 'scikit-learn', 
+        go.Figure - подготовленный для отображения график
+    '''
+    to_exclude = set(['python', 'sql', 'pandas', 'data science', 'git',
+                      'математическая статистика', 'numpy', 'big data',
+                      'английский язык', 'it', 'scikit-learn',
                       'data analysis', 'matplotlib',
                       ])
 

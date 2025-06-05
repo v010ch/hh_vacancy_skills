@@ -19,16 +19,16 @@ color4 = ['gold', 'mediumturquoise', 'darkorange', 'lightgreen']
 color5 = ['gold', 'mediumturquoise', 'darkorange', 'lightgreen', 'coral']
 colors_grade = {'intern': 'gold', 'junior': 'lightcoral',
                 'middle': 'mediumturquoise', 'senior': 'darkorange',
-                'head': 'lightgreen'
+                'head': 'lightgreen',
                 }
 
 
-
 def load_and_prepare_data() -> pl.DataFrame:
-    """
-    args
+    '''
+    Загрузка и преобразование исходных данных для отображения
     return
-    """
+        pl.DataFrame - подготовленные для отображения данные
+    '''
     ret_df = pl.read_csv(os.path.join(DATA_PATH, 'vacancies_prepared.csv'),
                          try_parse_dates=True,
                          )
@@ -42,10 +42,13 @@ def load_and_prepare_data() -> pl.DataFrame:
 
 
 def pie_graphs(inp_df: pl.DataFrame):
-    """
+    '''
+    Построение кусочного графика распределения вакансий по заданным параметрам
     args
+        pl.DataFrame - исходный dataframe для построения графика
     return
-    """
+        go.Figure - подготовленный для отображения график
+    '''
     tmp = inp_df.filter(pl.col('grade').is_in(only_roles))\
         ['grade'].value_counts(normalize=True)
     # tmp = tmp.with_columns(pl.col('grade').map_elements(lambda x: order[x], return_dtype=pl.Int8)
@@ -81,10 +84,13 @@ def pie_graphs(inp_df: pl.DataFrame):
 
 
 def violin_salary(inp_df: pl.DataFrame):
-    """
+    '''
+    Построение pie plot предлагаемых зарплат по грейдами
     args
+        pl.DataFrame - исходный dataframe для построения графика
     return
-    """
+        go.Figure - график, готовый к отображению
+    '''
     roles = set(['intern', 'junior', 'middle', 'senior'])
     fig = go.Figure()
 
@@ -92,7 +98,7 @@ def violin_salary(inp_df: pl.DataFrame):
     tmp = tmp.filter(pl.col('grade').is_in(roles))
     tmp = tmp[['date_created', 'grade', 'salary_from_rur',]]
     fig.add_trace(go.Violin(x=tmp['grade'],
-                            y=tmp['salary_from_rur'], 
+                            y=tmp['salary_from_rur'],
                             line_color='black', fillcolor='mediumturquoise',
                             opacity=0.8,
                             legendgroup='from', scalegroup='from', name='от',
@@ -104,7 +110,7 @@ def violin_salary(inp_df: pl.DataFrame):
     tmp = tmp.filter(pl.col('grade').is_in(roles))
     tmp = tmp[['date_created', 'grade', 'salary_to_rur',]]
     fig.add_trace(go.Violin(x=tmp['grade'],
-                            y=tmp['salary_to_rur'], 
+                            y=tmp['salary_to_rur'],
                             line_color='black', fillcolor='gold',
                             opacity=0.8,
                             legendgroup='to', scalegroup='to', name='до',
@@ -141,27 +147,31 @@ fig_violin_salary = violin_salary(vacancies)
 layout = html.Div([
     html.H1(header_text),
     html.Br(),
-    html.Div(children=[dcc.Graph(figure=fig_pies)]
-             ),
-    # dcc.Graph(figure=fig_time),
+
+    # Блок отображения процента распределения грейдов и требуемого опыта
+    html.Div(children=[dcc.Graph(figure=fig_pies)]),
+
+    # Блок отображения графиков кол-ва вакансий по заданным параметрам
     dcc.Graph(figure={}, id='time_graph'),
-    html.P("Отображать по периоду:"),
+    html.P('Отображать по периоду:'),
     dcc.Dropdown(id='by_period',
                  options=[
-                     {'label': 'День', 'value': 'date'},   # 'День', 'Неделя', 'Месяц',],
+                     {'label': 'День', 'value': 'date'},
                      {'label': 'Неделя', 'value': 'week'},
                      {'label': 'Месяц', 'value': 'month'},
                  ],
                  value='date', clearable=False,
                  ),
-    html.P("Отображать по грейду:"),
-    dcc.Dropdown(id='by_grade', 
+    html.P('Отображать по грейду:'),
+    dcc.Dropdown(id='by_grade',
                  options=['Суммарно', 'По грейдам'],
                  value='Суммарно', clearable=False,
                  ),
     html.Br(),
     html.Br(),
     html.Br(),
+
+    # Блок отображения violin plot предлагаемых зарплат
     html.Div(children=[dcc.Graph(figure=fig_violin_salary)]
              ),
 ])
@@ -173,11 +183,14 @@ layout = html.Div([
     Input(component_id='by_grade', component_property='value'),
  )
 def scatter_cnt_vacancies(by_period: str, by_grade: str):
-    """
+    '''
+    График кол-ва вакансий, построенный по заданным параметрам
     args
+        by_period: str - париод отсчета (день, неделя, месяц)
+        by_grade: str - грейд, по которому отображать (суммарно, по грейдам)
     return
-    """
-    # global vacancies
+        go.Figure - график, готовый к отображению
+    '''
     #pediod_dict = {'День': 'date', 'Неделя': 'week', 'Месяц': 'month'}
     ttl_word = {'date': 'дням', 'week': 'неделям', 'month': 'месяцам'}
     ttl_incert = ttl_word[by_period]
@@ -185,12 +198,16 @@ def scatter_cnt_vacancies(by_period: str, by_grade: str):
 
     if by_grade == 'Суммарно':
         ttl = f'Кол-во вакансий по {ttl_incert}'
-        tmp = vacancies.group_by(by_period).agg(pl.col('vacancy_id').count()).sort(by=by_period)
+        tmp = vacancies.group_by(by_period)\
+                       .agg(pl.col('vacancy_id').count())\
+                       .sort(by=by_period)
         fig = go.Figure(data=go.Scatter(x=tmp[by_period], y=tmp['vacancy_id']))
     else:
         ttl = f'Кол-во вакансий по {ttl_incert} и грейдам'
         fig = go.Figure()
-        tmp = vacancies.group_by([by_period, 'grade']).agg(pl.col('vacancy_id').count()).sort(by=by_period)
+        tmp = vacancies.group_by([by_period, 'grade'])\
+                       .agg(pl.col('vacancy_id').count())\
+                       .sort(by=by_period)
         for el in ['intern', 'junior', 'middle', 'senior', 'head']:
             tmp_grade = tmp.filter(pl.col('grade') == el).sort(by=by_period)
             fig.add_trace(go.Scatter(x=tmp_grade[by_period],

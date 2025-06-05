@@ -1,4 +1,4 @@
-
+'''Головная часть дашборда/главное приложение'''
 import dash
 from dash import Dash, dcc, html
 
@@ -9,8 +9,8 @@ app.layout = html.Div([
     html.H1('Обзор вакансий и ключевых скилов набора вакансий data scientist, etc с hh.ru'),
     html.Div([
         html.Div(
-            # dcc.Link(f"{page['name']}_{page['path']}", href=page["relative_path"])
-            dcc.Link(f"{page['name']}", href=page["relative_path"])
+            # dcc.Link(f'{page['name']}_{page['path']}', href=page['relative_path'])
+            dcc.Link(f'{page['name']}', href=page['relative_path'])
         ) for page in dash.page_registry.values()
     ]),
     dash.page_container,
