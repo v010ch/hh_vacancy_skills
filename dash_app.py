@@ -5,11 +5,12 @@ from dash import Dash, dcc, html
 
 app = Dash(__name__, use_pages=True)
 
+
 app.layout = html.Div([
-    html.H1('Обзор вакансий и ключевых скилов набора вакансий data scientist, etc с hh.ru'),
+    html.H1('Обзор вакансий и ключевых скилов набора '
+            'вакансий data scientist, etc с hh.ru'),
     html.Div([
         html.Div(
-            # dcc.Link(f'{page['name']}_{page['path']}', href=page['relative_path'])
             dcc.Link(f'{page['name']}', href=page['relative_path'])
         ) for page in dash.page_registry.values()
     ]),
@@ -18,5 +19,5 @@ app.layout = html.Div([
 
 
 if __name__ == '__main__':
-    #app.run(debug=True)
+    # app.run(debug=True)
     app.run()

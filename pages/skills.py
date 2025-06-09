@@ -13,7 +13,7 @@ register_page(__name__,
               )
 
 DATA_PATH = os.path.join('.', 'data')
-only_roles = set(['intern', 'junior', 'middle', 'senior', 'head'])
+# ONLY_ROLES = set(['intern', 'junior', 'middle', 'senior', 'head'])
 
 
 def load_and_prepare_data() -> pl.DataFrame:
@@ -45,13 +45,14 @@ layout = html.Div([
     html.H1(header_text),
     html.Br(),
 
-    # Блок отображения wordcloud скилов
-    html.P("Отображать по грейду:"),
+    # Блок отображения облака скилов
+    dcc.Graph(figure={}, id='wordcloud'),
+    html.P('Отображать облако скилов по грейду:'),
     dcc.Dropdown(id='by_grade',
                  options=['Суммарно', 'intern', 'junior', 'middle', 'senior'],
                  value='Суммарно', clearable=False,
                  ),
-    html.P('С учетом скилов:'),
+    html.P('Отображать с учетом скилов:'),
     dcc.Dropdown(id='exclude',
                  # options=['Всех', 'Без самых очевидных'],
                  options=[{'label': 'Всех', 'value': False},
@@ -59,15 +60,24 @@ layout = html.Div([
                           ],
                  value=False, clearable=False,
                  ),
-    dcc.Graph(figure={}, id='wordcloud'),
     html.Br(),
     html.Br(),
 
-    # Блок отображения таблицы скилов
-    dcc.Dropdown(id='table_by_grade',
+    # Блок отображения трендов скилов
+    dcc.Graph(figure={}, id='skills_trends'),
+    html.P('Отображать топ N скилов:'),
+    dcc.Dropdown(id='trend_by_grade',
+                 options=['0-20', '21-40', '41-60'],
+                 value='0-20', clearable=False,
+                 ),
+    html.P('Отображать тренды по грейду:'),
+    dcc.Dropdown(id='trend_by_grade',
                  options=['Суммарно', 'intern', 'junior', 'middle', 'senior'],
                  value='Суммарно', clearable=False,
                  ),
+
+    # Блок отображения таблицы скилов
+
 ])
 
 
@@ -105,5 +115,40 @@ def figure_wordcloud(inp_grade: str, inp_exclude: bool):
     fig.add_trace(go.Image(z=wcloud))
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
+
+    return fig
+
+
+@callback(
+    Output(component_id='skills_trends', component_property='figure'),
+    Input(component_id='trends_by_grade', component_property='value'),
+    Input(component_id='trends_part', component_property='value'),
+)
+def scatter_trend_skills(trends_by_grade: str, trends_part: str):
+    '''
+    Отображение трендов скилов по частям и грейдам
+    args
+        trends_part: str - отображать топ 0-20 / 21-40 / 41-60 скилов
+        trends_by_grade: str - отображать общее / по грейдам
+    return
+        go.Figure - подготовленный для отображения график
+    '''
+    fig = go.Figure()
+
+    # ttl_incert = ttl_word[by_period]
+    ttl = f'Отображение трендов топ {trends_part} скилов'
+           ' для {trends_by_grade} грейда(ов)'
+    fig.add_trace(go.Scatter(x=tmp_grade[by_period],
+                             y=tmp_grade['vacancy_id'],
+                             line={'color': COLORS_GRADE[el],
+                                   'width': 2,
+                                   },
+                             name=el))
+
+    fig.update_layout(title_text=ttl,
+                      title_x=0.5,
+                      font={'size': 18},
+                      width=1400,
+                      height=600)
 
     return fig
