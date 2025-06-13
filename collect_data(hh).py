@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -21,27 +21,27 @@ import polars as pl
 
 
 
-# In[2]:
+# In[ ]:
 
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# In[3]:
+# In[ ]:
 
 
 BREAK_STOP_LEVEL = 3
 DATA_PATH = os.path.join('.', 'data')
 
 
-# In[4]:
+# In[ ]:
 
 
 addr = 'https://api.hh.ru/vacancies'
 head = {'User-Agent': 'NoApp StudyPro/0.9.5'}
 
 
-# In[5]:
+# In[ ]:
 
 
 vacancies_list = ['Data scientist',
@@ -80,19 +80,21 @@ answ_pages.json()['items'][0].keys()
 "middle"	                      "between1And3"	11      "between3And6"	17      "moreThan6"	    3
 "senior"	                      "between1And3"	4       "between3And6"	50      "moreThan6"	    5
 "head"	                          "between1And3"	2	    "between3And6"	6       "moreThan6"	    1
-# In[6]:
+# In[ ]:
 
 
 class UtilityClass():
-    """
-    """
+    '''
+    '''
     def __init__(self):
         self._clr = lambda x: (re.sub(r'[<>.,_+*?!/()]', ' ', str(x))).strip().lower()
 
 
     def _grade(self, inp_vals: dict) -> str:
-        """
-        """
+        '''
+        args
+        return
+        '''
         name = self._clr(inp_vals['vacancy_name'])
     
         if 'intern' in name and\
@@ -152,8 +154,10 @@ class UtilityClass():
 
 
     def _salary(self, inp_salary: dict) -> tuple:
-        """
-        """
+        '''
+        args
+        return
+        '''
         ret_from = -1
         ret_to = -1
         ret_currency = '-1'
@@ -174,8 +178,8 @@ class UtilityClass():
 
 
 class VacancyClass(UtilityClass):
-    """
-    """
+    '''
+    '''
     def __init__(self):
         super().__init__()
         self.__all_id = set()
@@ -199,20 +203,26 @@ class VacancyClass(UtilityClass):
 
 
     def add_id(self, inp_id: int) -> None:
-        """
-        """
+        '''
+        args
+        return
+        '''
         self.__all_id.add(inp_id)
 
 
     def check_id(self, inp_id: int) -> bool:
-        """
-        """
+        '''
+        args
+        return
+        '''
         return inp_id in self.__all_id
 
 
     def collect_data(self, inp_vacancy: dict) -> None:
-        """
-        """
+        '''
+        args
+        return
+        '''
         self.__new_id.append(int(inp_vacancy['id']))
         self.__vac_name.append(inp_vacancy['name'].lower())
         #descr = self._clr(inp_vacancy['description'])
@@ -237,8 +247,10 @@ class VacancyClass(UtilityClass):
 
 
     def reset(self) -> None:
-        """
-        """
+        '''
+        args
+        return
+        '''
         self.__new_id = list()
         self.__area = list()
         self.__date_created = list()
@@ -254,8 +266,10 @@ class VacancyClass(UtilityClass):
 
 
     def savevacancies(self) -> None:
-        """
-        """
+        '''
+        args
+        return
+        '''
         if len(self.__new_id) <= 0:
             return 
 
@@ -297,8 +311,8 @@ class VacancyClass(UtilityClass):
 
 
 class VacancySkillsClass(UtilityClass):
-    """
-    """
+    '''
+    '''
     def __init__(self):
         super().__init__()
         self.__id = list()
@@ -310,8 +324,10 @@ class VacancySkillsClass(UtilityClass):
 
 
     def collect_skills(self, inp_vacancy: dict) -> None:
-        """
-        """
+        '''
+        args
+        return
+        '''
         if len(inp_vacancy['key_skills']) == 0:
             return
 
@@ -325,8 +341,10 @@ class VacancySkillsClass(UtilityClass):
 
 
     def reset(self) -> None:
-        """
-        """
+        '''
+        args
+        return
+        '''
         self.__id = list()
         self.__name = list()
         self.__experience = list()
@@ -336,8 +354,10 @@ class VacancySkillsClass(UtilityClass):
 
 
     def saveskills(self) -> None:
-        """
-        """
+        '''
+        args
+        return
+        '''
         if len(self.__id) <= 0:
             return
 
@@ -374,7 +394,7 @@ class VacancySkillsClass(UtilityClass):
 
 # # Забираем данные по вакансиям с hh
 
-# In[7]:
+# In[ ]:
 
 
 vacancy = VacancyClass()
@@ -387,7 +407,7 @@ skills = VacancySkillsClass()
 
 
 
-# In[8]:
+# In[ ]:
 
 
 get_ipython().run_cell_magic('time', '', 'vacancy.reset()\nskills.reset()\nbreaks_count = 0\n\n# going through all vacancies name\nfor element in vacancies_list:\n#for element in [vacancies_list[0]]:\n    new_ones = 0\n\n    #getting amount of all vacancies\n    try:\n        answ = requests.get(addr, params={\'text\':element}, headers = head)\n        if answ.status_code != 200:\n            print(\'Error get info with \' + element + \' tag\')\n            break\n    except:\n        print(\'exception try to get list of vacansies for profession\')\n        breaks_count += 1\n        print(\'end\')\n        break\n\n    print(answ.url)\n    time.sleep(1)\n\n    info_tag = answ.json()\n    amnt_pages = info_tag[\'pages\']\n    amnt_found = info_tag[\'found\']\n\n    # going through all pages\n    for page in tqdm(range(amnt_pages)):\n    #for page in tqdm(range(4)):\n        try:\n            answ = requests.get(addr, params={\'text\':element, \'page\':page}, headers = head)\n            if answ.status_code != 200:\n                print(\'Error get info with \' + element + \' tag on page \' + str(page))\n                break\n        except:\n            print(f\'exception try to get next list of vacansies for {element}\')\n            breaks_count += 1\n            if breaks_count > BREAK_STOP_LEVEL:\n                break\n            continue\n            \n        info_tag_page = answ.json()\n        info_tag_page = info_tag_page[\'items\']\n        if len(info_tag_page) == 0:\n            break\n\n        #print(hahahaha)\n        #going through all vacancies on page\n        for vac_idx in range( len(info_tag_page) ):\n            if vacancy.check_id(info_tag_page[vac_idx][\'id\']):\n                break\n\n            role = info_tag_page[vac_idx][\'professional_roles\'][0][\'name\']\n            if not role in enabled_professional_roles:\n                break\n\n            try:\n                #print(info_tag_page[vac][\'id\'])\n                answ = requests.get(addr + \'/\' + info_tag_page[vac_idx][\'id\'], headers = head)\n                if answ.status_code != 200:\n                    print(\'Error get info about vacancia \' + info_tag_page[vac_idx][\'id\'] +\\\n                          \'code \' + answ.status_code)\n                    break  \n            except:\n                print(\'exception try to get vacancy description\')\n                breaks_count += 1\n                if breaks_count > BREAK_STOP_LEVEL:\n                    break\n                time.sleep(0.37)\n                continue\n            vac = answ.json()\n\n            vacancy.collect_data(vac)\n            skills.collect_skills(vac)\n            vacancy.add_id(info_tag_page[vac_idx][\'id\'])\n            new_ones += 1\n\n            time.sleep(0.37)\n\n    print(\'Found \' + str(amnt_found) + \' vacancies with key words "\' + element + \'" with \' + str(new_ones) + \' not in list\')\n\nskills.saveskills()\nvacancy.savevacancies()\nprint(\'\\nDone\')\n')
