@@ -85,6 +85,7 @@ answ_pages.json()['items'][0].keys()
 
 class UtilityClass():
     '''
+    Шаблонный класс общих функций для вакансий и скилов
     '''
     def __init__(self):
         self._clr = lambda x: (re.sub(r'[<>.,_+*?!/()]', ' ', str(x))).strip().lower()
@@ -92,71 +93,82 @@ class UtilityClass():
 
     def _grade(self, inp_vals: dict) -> str:
         '''
+        Определение грейда вакансии по имени и опыту
         args
+            inp_vals: dict - имя вакансии и опыт ('vacancy_name', 'experience')
         return
+            str - грейд вакансии
         '''
         name = self._clr(inp_vals['vacancy_name'])
-    
+
+        if 'junior' in name and\
+           'middle' in name and\
+           'senior' in name:
+            return 'junior/middle/senior'
+
         if 'intern' in name and\
            'junior' in name:
             return 'intern/junior'
-    
+
         if 'junior' in name and\
            'middle' in name:
             return 'junior/middle'
-    
+
         if 'middle' in name and\
            'senior' in name:
             return 'middle/senior'
-    
+
         if 'стажер' in name or\
            'стажёр' in name or\
            'intern' in name:
             return 'intern'
-    
+
         if 'junior' in name or\
            'младший' in name:
             return 'junior'
-    
+
         if 'middle' in name:
             return 'middle'
-    
+
         if 'старший' in name or\
            'senior' in name:
             return 'senior'
-    
+
         if 'head' in name or\
            'директор' in name or\
            'руководитель' in name:
             return 'head'
-    
+
         if 'leader' in name or\
            'лидер' in name:
             return 'team-leader'
-    
+
         #without grade in headder
         #analysing experience
         experience = inp_vals['experience'].lower()
         if experience == 'noexperience':
             return 'intern'
-    
+
         if experience == 'between1and3':
             return 'junior'
-    
+
         if experience == 'between3and6':    #or senior. think senior should be at header
             return 'middle'
-    
+
         if experience == 'morethan6':
             return 'senior'
-    
+
         #print(name, experience)
         return 'unknown' # cann't be here
 
 
-    def _salary(self, inp_salary: dict) -> tuple:
+    def _salary(self, inp_salary: dict) -> tuple[float, float, str]:
         '''
+        Извлечение заработной платы и валюты из вакансии
         args
+            inp_salary: dict - вакансия
         return
+            float, float, str - зарплата от, до, валюта
         '''
         ret_from = -1
         ret_to = -1
@@ -179,6 +191,7 @@ class UtilityClass():
 
 class VacancyClass(UtilityClass):
     '''
+    Класс извлечения и сохранения данных из вакансии с api hh
     '''
     def __init__(self):
         super().__init__()
@@ -204,24 +217,30 @@ class VacancyClass(UtilityClass):
 
     def add_id(self, inp_id: int) -> None:
         '''
+        Добавление id вакансии, как уже сохраненной 
+        (защита от повторного сохранения и анализа)
         args
-        return
+            inp_id: int - id вакансии
         '''
         self.__all_id.add(inp_id)
 
 
     def check_id(self, inp_id: int) -> bool:
         '''
+        Проверка есть ли id вакансии в уже сохраненных и проанализированных
         args
+            inp_id: int - id вакансии
         return
+            bool - есть ли id вакансии в уже сохраненных и проанализированных
         '''
         return inp_id in self.__all_id
 
 
     def collect_data(self, inp_vacancy: dict) -> None:
         '''
+        Извлечение данных о вакансии с сохранением во внутренний dataframe
         args
-        return
+            inp_vacancy: dict - вакансия, полученная по api hh
         '''
         self.__new_id.append(int(inp_vacancy['id']))
         self.__vac_name.append(inp_vacancy['name'].lower())
@@ -248,8 +267,7 @@ class VacancyClass(UtilityClass):
 
     def reset(self) -> None:
         '''
-        args
-        return
+        Сброс атрабутов и настроек класса
         '''
         self.__new_id = list()
         self.__area = list()
@@ -267,8 +285,7 @@ class VacancyClass(UtilityClass):
 
     def savevacancies(self) -> None:
         '''
-        args
-        return
+        Сохранение внутреннего датафрейма с вакансиями в csv с предобработкой
         '''
         if len(self.__new_id) <= 0:
             return 
@@ -312,6 +329,7 @@ class VacancyClass(UtilityClass):
 
 class VacancySkillsClass(UtilityClass):
     '''
+    Класс извлечения и сохранения данных о скилах из вакансии с api hh
     '''
     def __init__(self):
         super().__init__()
@@ -325,8 +343,10 @@ class VacancySkillsClass(UtilityClass):
 
     def collect_skills(self, inp_vacancy: dict) -> None:
         '''
+        Извлечение данных о ключевых скилах и сохранение их во внутреннем
+        dataframe
         args
-        return
+            inp_vacancy: dict - вакансия, полученная по api hh
         '''
         if len(inp_vacancy['key_skills']) == 0:
             return
@@ -342,8 +362,7 @@ class VacancySkillsClass(UtilityClass):
 
     def reset(self) -> None:
         '''
-        args
-        return
+        Сброс атрибутов и настроек класса
         '''
         self.__id = list()
         self.__name = list()
@@ -355,8 +374,7 @@ class VacancySkillsClass(UtilityClass):
 
     def saveskills(self) -> None:
         '''
-        args
-        return
+        Сохранение внутреннего датафрейма ключевых скилов в csv с предобработкой
         '''
         if len(self.__id) <= 0:
             return
