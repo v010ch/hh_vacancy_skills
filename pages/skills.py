@@ -39,7 +39,8 @@ min_date = str(skills['date_created'].min().date())
 max_date = str(skills['date_created'].max().date())
 header_text = 'Обзор ключевых скилов в вакансиях data scientist/ML c hh.ru'\
                 + f' за период c {min_date} по {max_date}'
-
+table = skills['key_skills'].value_counts(normalize=True)\
+                            .sort(by='proportion', descending=True)
 
 layout = html.Div([
     html.H1(header_text),
@@ -77,7 +78,9 @@ layout = html.Div([
                  ),
 
     # Блок отображения таблицы скилов
-
+    dash_table.DataTable(data=table.to_dicts(),  # to_dict(), # 'records'
+                         columns=[{'name': i, 'id': i} for i in table.columns],
+                         ),
 ])
 
 
@@ -136,7 +139,7 @@ def scatter_trend_skills(trends_by_grade: str, trends_part: str):
     fig = go.Figure()
 
     # ttl_incert = ttl_word[by_period]
-    ttl = f'Отображение трендов топ {trends_part} скилов'
+    ttl = f'Отображение трендов топ {trends_part} скилов' + \
            ' для {trends_by_grade} грейда(ов)'
     fig.add_trace(go.Scatter(x=tmp_grade[by_period],
                              y=tmp_grade['vacancy_id'],
