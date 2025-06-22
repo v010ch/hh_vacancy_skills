@@ -28,6 +28,7 @@ def load_and_prepare_data() -> pl.DataFrame:
     ret_df = ret_df.with_columns(
         pl.col('date_created').dt.date().alias('date'),
         pl.col('date_created').dt.weekday().alias('weekday'),
+        pl.col('date_created').dt.day().alias('day'),
         pl.col('date_created').dt.week().alias('week'),
         pl.col('date_created').dt.month().alias('month'),
     )
@@ -100,8 +101,8 @@ layout = html.Div([
                                      'maxWidth': '300px',
                                      'minWidth': '300px',
                                      },
-                         style_table={'overflowX': 'auto'
-                                      },
+                         # style_table={'overflowX': 'auto'
+                         #              },
                          data=table.to_dicts(),
                          columns=columns,
                          page_size=20,
@@ -146,6 +147,67 @@ def figure_wordcloud(inp_grade: str, inp_exclude: bool):
     fig.update_yaxes(visible=False)
 
     return fig
+
+
+def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
+    '''
+    args
+    return
+    '''
+    if skills['month'].max() < 2:
+        # new year cross
+        pass
+    else:
+        year = skills['year'].max()
+        month = skills['month'].max() - 2
+
+    tmp = skills.filter(pl.col('date_created') >= datetime.date(year, month, 1))
+    tmp = tmp.filter(pl.col('grade').is_in(only_roles))
+    #tmp = tmp.group_by(['grade', 'month']).agg(pl.col('key_skills').value_counts(normalize=True))
+    tmp = tmp.group_by('month').agg(pl.col('key_skills').value_counts(normalize=True))
+
+    tmp = tmp.explode('key_skills')\
+            .with_columns(pl.col('key_skills').map_elements(lambda x: x['key_skills'],
+                                                            return_dtype=pl.String)
+                                            .alias('key_skills'),
+                        pl.col('key_skills').map_elements(lambda x: x['proportion'],
+                                                            return_dtype=pl.Float32)
+                                            .alias('proportion'),
+                        )\
+            .sort(by='proportion', descending=True)
+
+    tmp = tmp.filter(pl.col('proportion') >= 0.01)
+
+    key_skills = tmp['key_skills'].unique()
+    key_skills = key_skills.to_frame()\
+            .join(tmp.filter(pl.col('month') == month)[['key_skills', 'proportion']],
+                    on='key_skills',
+                    how='left',
+                    suffix=f'_m0',
+                )\
+            .join(tmp.filter(pl.col('month') == (month + 1))[['key_skills', 'proportion']],
+                                on='key_skills',
+                                how='left',
+                                suffix=f'_m1',
+                            )\
+            .join(tmp.filter(pl.col('month') == (month + 2))[['key_skills', 'proportion']],
+                                on='key_skills',
+                                how='left',
+                                suffix=f'_m2',
+                            )
+
+    key_skills.columns = ['key_skills', f'{month}', f'{month+1}', f'{month+2}']
+    key_skills = key_skills.with_columns((pl.col('5') - pl.col('4')).alias('diff_1'),
+                        (pl.col('6') - pl.col('5')).alias('diff_2'),
+                        (pl.col('6') - pl.col('4')).alias('diff_3'),
+                                    )
+    key_skills = key_skills.with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3')
+                          .alias('trend')
+                       )\
+            .sort('trend', descending=True)\
+            .drop_nans('trend')
+
+    return key_skills
 
 
 @callback(
