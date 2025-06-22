@@ -40,13 +40,27 @@ max_date = str(skills['date_created'].max().date())
 header_text = 'Обзор ключевых скилов в вакансиях data scientist/ML c hh.ru'\
                 + f' за период c {min_date} по {max_date}'
 table = skills['key_skills'].value_counts(normalize=True)\
-                            .sort(by='proportion', descending=True)
+                            .sort(by='proportion', descending=True)[:80]
+# table = table.with_columns(pl.col('proportion')
+#                              .map_elements(lambda x: round(100*x, 2),
+#                                            return_dtype=pl.Float32)
+#                            )[:80]
+# table.columns = ['Ключевые скилы', 'Процент в вакансиях']
+
+percentage = dash_table.FormatTemplate.percentage(2)
+columns = [
+    dict(id='key_skills', name='Ключевые скилы'),
+    dict(id='proportion', name='Процент в вакансиях',
+         type='numeric', format=percentage),
+]
+
 
 layout = html.Div([
     html.H1(header_text),
     html.Br(),
 
     # Блок отображения облака скилов
+    html.H2('Облако слов ключевых вакансий'),
     dcc.Graph(figure={}, id='wordcloud'),
     html.P('Отображать облако скилов по грейду:'),
     dcc.Dropdown(id='by_grade',
@@ -59,12 +73,13 @@ layout = html.Div([
                  options=[{'label': 'Всех', 'value': False},
                           {'label': 'Без самых очевидных', 'value': True},
                           ],
-                 value=False, clearable=False,
+                 value=True, clearable=False,
                  ),
     html.Br(),
     html.Br(),
 
     # Блок отображения трендов скилов
+    html.H2('Максимальные тренды скилов (за 3 месяца, не менее 1% вакансий)'),
     dcc.Graph(figure={}, id='skills_trends'),
     html.P('Отображать топ N скилов:'),
     dcc.Dropdown(id='trend_by_grade',
@@ -76,10 +91,21 @@ layout = html.Div([
                  options=['Суммарно', 'intern', 'junior', 'middle', 'senior'],
                  value='Суммарно', clearable=False,
                  ),
+    html.Br(),
+    html.Br(),
 
     # Блок отображения таблицы скилов
-    dash_table.DataTable(data=table.to_dicts(),  # to_dict(), # 'records'
-                         columns=[{'name': i, 'id': i} for i in table.columns],
+    html.H2('Процент ключевых скилов в вакансиях'),
+    dash_table.DataTable(style_data={'width': '300',
+                                     'maxWidth': '300px',
+                                     'minWidth': '300px',
+                                     },
+                         style_table={'overflowX': 'auto'
+                                      },
+                         data=table.to_dicts(),
+                         columns=columns,
+                         page_size=20,
+                         fill_width=False,
                          ),
 ])
 
