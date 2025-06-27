@@ -1,6 +1,8 @@
 '''Дашборд для обзора ключевых скилов'''
 
 import os
+import datetime
+
 from dash import register_page, callback, dash_table, dcc, html, Output, Input
 import polars as pl
 from plotly import graph_objects as go
@@ -13,7 +15,7 @@ register_page(__name__,
               )
 
 DATA_PATH = os.path.join('.', 'data')
-# ONLY_ROLES = set(['intern', 'junior', 'middle', 'senior', 'head'])
+ONLY_ROLES = set(['intern', 'junior', 'middle', 'senior', 'head'])
 
 
 def load_and_prepare_data() -> pl.DataFrame:
@@ -22,7 +24,7 @@ def load_and_prepare_data() -> pl.DataFrame:
     return
         pl.DataFrame - подготовленные для отображения данные
     '''
-    ret_df = pl.read_csv(os.path.join(DATA_PATH, 'skills.csv'),
+    ret_df = pl.read_csv(os.path.join(DATA_PATH, 'skills_prepared.csv'),
                          try_parse_dates=True,
                          )
     ret_df = ret_df.with_columns(
@@ -31,8 +33,70 @@ def load_and_prepare_data() -> pl.DataFrame:
         pl.col('date_created').dt.day().alias('day'),
         pl.col('date_created').dt.week().alias('week'),
         pl.col('date_created').dt.month().alias('month'),
+        pl.col('date_created').dt.year().alias('year'),
     )
     return ret_df
+
+
+def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
+    '''
+    args
+    return
+    '''
+    if inp_df['month'].max() < 2:
+        # new year cross
+        year = 1
+        month = 1
+    else:
+        year = inp_df['year'].max()
+        month = inp_df['month'].max() - 2
+
+    tmp = inp_df.filter(pl.col('date_created') >= datetime.date(year, month, 1))
+    tmp = tmp.filter(pl.col('grade').is_in(ONLY_ROLES))
+
+    tmp = tmp.group_by('month').agg(pl.col('key_skills').value_counts(normalize=True))
+    tmp = tmp.explode('key_skills')\
+             .with_columns(pl.col('key_skills').map_elements(lambda x: x['key_skills'],
+                                                             return_dtype=pl.String)
+                                               .alias('key_skills'),
+                           pl.col('key_skills').map_elements(lambda x: x['proportion'],
+                                                             return_dtype=pl.Float32)
+                                               .alias('proportion'),
+                           )\
+             .sort(by='proportion', descending=True)
+
+    tmp = tmp.filter(pl.col('proportion') >= 0.01)
+
+    key_skills = tmp['key_skills'].unique()
+    key_skills = key_skills.to_frame()\
+            .join(tmp.filter(pl.col('month') == month)[['key_skills', 'proportion']],
+                  on='key_skills',
+                  how='left',
+                  suffix=f'_m0',
+                  )\
+            .join(tmp.filter(pl.col('month') == (month + 1))[['key_skills', 'proportion']],
+                  on='key_skills',
+                  how='left',
+                  suffix=f'_m1',
+                  )\
+            .join(tmp.filter(pl.col('month') == (month + 2))[['key_skills', 'proportion']],
+                  on='key_skills',
+                  how='left',
+                  suffix=f'_m2',
+                  )
+
+    key_skills.columns = ['key_skills', f'{month}', f'{month+1}', f'{month+2}']
+    key_skills = key_skills.with_columns((pl.col('5') - pl.col('4')).alias('diff_1'),
+                                         (pl.col('6') - pl.col('5')).alias('diff_2'),
+                                         (pl.col('6') - pl.col('4')).alias('diff_3'),
+                                         )
+    key_skills = key_skills.with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3')\
+                                           .alias('trend')
+                                         )\
+                           .sort('trend', descending=True)\
+                           .drop_nans('trend')
+
+    return key_skills
 
 
 skills = load_and_prepare_data()
@@ -47,6 +111,8 @@ table = skills['key_skills'].value_counts(normalize=True)\
 #                                            return_dtype=pl.Float32)
 #                            )[:80]
 # table.columns = ['Ключевые скилы', 'Процент в вакансиях']
+trends = trend_table(skills)
+
 
 percentage = dash_table.FormatTemplate.percentage(2)
 columns = [
@@ -87,11 +153,11 @@ layout = html.Div([
                  options=['0-20', '21-40', '41-60'],
                  value='0-20', clearable=False,
                  ),
-    html.P('Отображать тренды по грейду:'),
-    dcc.Dropdown(id='trend_by_grade',
-                 options=['Суммарно', 'intern', 'junior', 'middle', 'senior'],
-                 value='Суммарно', clearable=False,
-                 ),
+    # html.P('Отображать тренды по грейду:'),
+    # dcc.Dropdown(id='trend_by_grade',
+    #              options=['Суммарно', 'intern', 'junior', 'middle', 'senior'],
+    #              value='Суммарно', clearable=False,
+    #              ),
     html.Br(),
     html.Br(),
 
@@ -149,87 +215,33 @@ def figure_wordcloud(inp_grade: str, inp_exclude: bool):
     return fig
 
 
-def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
-    '''
-    args
-    return
-    '''
-    if skills['month'].max() < 2:
-        # new year cross
-        pass
-    else:
-        year = skills['year'].max()
-        month = skills['month'].max() - 2
-
-    tmp = skills.filter(pl.col('date_created') >= datetime.date(year, month, 1))
-    tmp = tmp.filter(pl.col('grade').is_in(only_roles))
-    #tmp = tmp.group_by(['grade', 'month']).agg(pl.col('key_skills').value_counts(normalize=True))
-    tmp = tmp.group_by('month').agg(pl.col('key_skills').value_counts(normalize=True))
-
-    tmp = tmp.explode('key_skills')\
-            .with_columns(pl.col('key_skills').map_elements(lambda x: x['key_skills'],
-                                                            return_dtype=pl.String)
-                                            .alias('key_skills'),
-                        pl.col('key_skills').map_elements(lambda x: x['proportion'],
-                                                            return_dtype=pl.Float32)
-                                            .alias('proportion'),
-                        )\
-            .sort(by='proportion', descending=True)
-
-    tmp = tmp.filter(pl.col('proportion') >= 0.01)
-
-    key_skills = tmp['key_skills'].unique()
-    key_skills = key_skills.to_frame()\
-            .join(tmp.filter(pl.col('month') == month)[['key_skills', 'proportion']],
-                    on='key_skills',
-                    how='left',
-                    suffix=f'_m0',
-                )\
-            .join(tmp.filter(pl.col('month') == (month + 1))[['key_skills', 'proportion']],
-                                on='key_skills',
-                                how='left',
-                                suffix=f'_m1',
-                            )\
-            .join(tmp.filter(pl.col('month') == (month + 2))[['key_skills', 'proportion']],
-                                on='key_skills',
-                                how='left',
-                                suffix=f'_m2',
-                            )
-
-    key_skills.columns = ['key_skills', f'{month}', f'{month+1}', f'{month+2}']
-    key_skills = key_skills.with_columns((pl.col('5') - pl.col('4')).alias('diff_1'),
-                        (pl.col('6') - pl.col('5')).alias('diff_2'),
-                        (pl.col('6') - pl.col('4')).alias('diff_3'),
-                                    )
-    key_skills = key_skills.with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3')
-                          .alias('trend')
-                       )\
-            .sort('trend', descending=True)\
-            .drop_nans('trend')
-
-    return key_skills
-
-
 @callback(
     Output(component_id='skills_trends', component_property='figure'),
-    Input(component_id='trends_by_grade', component_property='value'),
+    # Input(component_id='trends_by_grade', component_property='value'),
     Input(component_id='trends_part', component_property='value'),
 )
-def scatter_trend_skills(trends_by_grade: str, trends_part: str):
+def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
     '''
     Отображение трендов скилов по частям и грейдам
     args
         trends_part: str - отображать топ 0-20 / 21-40 / 41-60 скилов
         trends_by_grade: str - отображать общее / по грейдам
+                         (не используется в виду малого кол-ва данных)
     return
         go.Figure - подготовленный для отображения график
     '''
     fig = go.Figure()
 
+    if trends_part == '0-20':
+        data = trends[:20]
+    elif trends_part == '21-40':
+        data = trends[21:40]
+    else:  # trends_part == '41-60':
+        data = trends[41:]
+
     # ttl_incert = ttl_word[by_period]
-    ttl = f'Отображение трендов топ {trends_part} скилов' + \
-           ' для {trends_by_grade} грейда(ов)'
-    fig.add_trace(go.Scatter(x=tmp_grade[by_period],
+    ttl = f'Отображение трендов топ {trends_part} скилов'
+    fig.add_trace(go.Scatter(x=data[by_period],
                              y=tmp_grade['vacancy_id'],
                              line={'color': COLORS_GRADE[el],
                                    'width': 2,

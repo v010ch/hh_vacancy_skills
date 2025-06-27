@@ -15,6 +15,8 @@ import polars as pl
 
 from datetime import date
 
+from skills_synonym_dict import skills_synonym_dict
+
 
 # In[ ]:
 
@@ -39,7 +41,7 @@ DATA_PATH = os.path.join('.', 'data')
 
 
 
-# In[3]:
+# In[ ]:
 
 
 def prepare_er(inp_df: pl.DataFrame, inp_curr: str) -> pl.DataFrame:
@@ -122,7 +124,7 @@ def prepare_salary_to(inp_vals: dict) -> pl.Int64:
     return int(s_to * exchange_rate)
 
 
-# In[4]:
+# In[ ]:
 
 
 er = pl.DataFrame(pl.date_range(date(2025, 4, 1), 
@@ -145,7 +147,7 @@ er.columns = cols
 
 
 
-# In[5]:
+# In[ ]:
 
 
 tmp_date = date(2025, 4, 5)
@@ -153,13 +155,15 @@ tmp_date = date(2025, 4, 5)
 er.filter(pl.col('date') == tmp_date)['er_usd'].item()
 
 
-# In[6]:
+# In[ ]:
 
 
 
 
 
-# In[7]:
+# ## Vacancies
+
+# In[ ]:
 
 
 vacancies = pl.read_csv(os.path.join(DATA_PATH, 'vacancies.csv'), try_parse_dates=True)
@@ -173,7 +177,7 @@ vacancies = vacancies.with_columns(
 )
 
 
-# In[8]:
+# In[ ]:
 
 
 #vacancies.columns
@@ -185,10 +189,46 @@ vacancies = vacancies.with_columns(
 
 
 
-# In[9]:
+# In[ ]:
 
 
 vacancies.write_csv(os.path.join(DATA_PATH, 'vacancies_prepared.csv'))
+
+
+# In[ ]:
+
+
+
+
+
+# ## Skills
+
+# In[5]:
+
+
+skills = pl.read_csv(os.path.join(DATA_PATH, 'skills.csv'))
+
+
+# In[16]:
+
+
+skills = skills.with_columns(
+    pl.col('key_skills').replace_strict(skills_synonym_dict, 
+                                        default=pl.col("key_skills")
+                                        )
+                             )
+
+
+# In[17]:
+
+
+skills = skills.unique(subset=['vacancy_id', 'key_skills'])
+
+
+# In[19]:
+
+
+skills.write_csv(os.path.join(DATA_PATH, 'skills_prepared.csv'))
 
 
 # In[ ]:
