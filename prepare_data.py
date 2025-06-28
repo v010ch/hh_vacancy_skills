@@ -1,4 +1,4 @@
-# coding: utf-8
+''''''
 
 import os
 import polars as pl
@@ -35,11 +35,13 @@ def prepare_er(inp_df: pl.DataFrame, inp_curr: str) -> pl.DataFrame:
     # cnt column != 1
     if inp_curr == 'kzt':
         cur = cur.with_columns((pl.col('er') / pl.col('cnt'))\
-                               .alias('er'))
+                               .alias('er')
+                               )
 
     inp_df = inp_df.join(cur[['date', 'er']],
                          how='left', on='date',
-                         suffix=f'_{inp_curr}')
+                         suffix=f'_{inp_curr}',
+                         )
 
     if f'er_{inp_curr}' in inp_df.columns:
         inp_df = inp_df.with_columns(pl.col(f'er_{inp_curr}').forward_fill())
@@ -99,9 +101,10 @@ def prepare_salary_to(inp_vals: dict) -> pl.Int64:
 
 if __name__ == '__main__':
 
-    er = pl.DataFrame(pl.date_range(date(2025, 4, 1),
-                                    date.today(), eager=True,
-                                    ).alias('date'))
+    er = pl.DataFrame(pl.date_range(date(2025, 4, 1), date.today(),
+                                    eager=True,
+                                    ).alias('date')
+                      )
 
     er = prepare_er(er, 'usd')
     er = prepare_er(er, 'eur')
@@ -121,11 +124,11 @@ if __name__ == '__main__':
                             try_parse_dates=True)
     vacancies = vacancies.with_columns(
         pl.struct('salary_from', 'salary_currency', 'date_created')\
-        .map_elements(prepare_salary_from, return_dtype=pl.Int64)\
-        .alias('salary_from_rur'),
+          .map_elements(prepare_salary_from, return_dtype=pl.Int64)\
+          .alias('salary_from_rur'),
         pl.struct('salary_to', 'salary_currency', 'date_created')\
-        .map_elements(prepare_salary_to, return_dtype=pl.Int64)\
-        .alias('salary_to_rur'),
+          .map_elements(prepare_salary_to, return_dtype=pl.Int64)\
+          .alias('salary_to_rur'),
     )
 
     vacancies.write_csv(os.path.join(DATA_PATH, 'vacancies_prepared.csv'))
