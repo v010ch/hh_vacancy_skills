@@ -88,17 +88,17 @@ def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
                   suffix=f'_m2',
                   )
 
-    key_skills.columns = ['key_skills', f'{month}', f'{month+1}', f'{month+2}']
-    key_skills = key_skills.with_columns((pl.col('5') - pl.col('4')).alias('diff_1'),
-                                         (pl.col('6') - pl.col('5')).alias('diff_2'),
-                                         (pl.col('6') - pl.col('4')).alias('diff_3'),
+    key_skills.columns = ['key_skills', f'{month}', f'{month + 1}', f'{month + 2}']
+    key_skills = key_skills.with_columns((pl.col(f'{month + 1}') - pl.col(f'{month}')).alias('diff_1'),
+                                         (pl.col(f'{month + 2}') - pl.col(f'{month + 1}')).alias('diff_2'),
+                                         (pl.col(f'{month + 2}') - pl.col(f'{month}')).alias('diff_3'),
                                          )\
                            .with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3',
                                                             ignore_nulls=False)\
                                            .alias('trend')
                                          )\
                            .sort('trend', descending=True)\
-                           #  .drop_nans('trend')
+                           .drop_nans('trend')
 
     return key_skills
 
@@ -116,7 +116,7 @@ table = skills['key_skills'].value_counts(normalize=True)\
 #                            )[:80]
 # table.columns = ['Ключевые скилы', 'Процент в вакансиях']
 trends = trend_table(skills)
-print(trends.columns)
+
 
 percentage = dash_table.FormatTemplate.percentage(2)
 columns = [
@@ -153,7 +153,7 @@ layout = html.Div([
     html.H2('Максимальные тренды скилов (за 3 месяца, не менее 1% вакансий)'),
     dcc.Graph(figure={}, id='skills_trends'),
     html.P('Отображать топ N скилов:'),
-    dcc.Dropdown(id='trend_by_grade',
+    dcc.Dropdown(id='trends_part',
                  options=['1-10', '11-20', '21-30'],
                  value='1-10', clearable=False,
                  ),
@@ -218,10 +218,9 @@ def figure_wordcloud(inp_grade: str, inp_exclude: bool):
 
     return fig
 
-
+# Input(component_id='trends_by_grade', component_property='value'),
 @callback(
     Output(component_id='skills_trends', component_property='figure'),
-    # Input(component_id='trends_by_grade', component_property='value'),
     Input(component_id='trends_part', component_property='value'),
 )
 def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
@@ -234,7 +233,6 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
     return
         go.Figure - подготовленный для отображения график
     '''
-    print(trends_part)
     fig = go.Figure()
 
     if trends_part == '1-10':
@@ -242,7 +240,7 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
     elif trends_part == '11-20':
         data = trends[11:20]
     else:  # trends_part == '21-30':
-        data = trends[21:]
+        data = trends[21:30]
 
     month = int(data.columns[1])
     x = [MONTH_NAME[month], MONTH_NAME[month+1], MONTH_NAME[month+2]]
@@ -251,7 +249,7 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
     ttl = f'Отображение трендов топ {trends_part} скилов'
     for el in skill_names:
         tmp = data.filter(pl.col('key_skills') == el)\
-                            [['diff_1', 'diff_2', 'diff_3']]
+                            [[f'{month}', f'{month + 1}', f'{month + 2}']]
         fig.add_trace(go.Scatter(x=x,
                                  y=tmp.to_numpy()[0],
                                  mode='lines',
@@ -264,7 +262,7 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
 
     fig.update_layout(title_text=ttl,
                       title_x=0.5,
-                      font={'size': 18},
+                      # font={'size': 18},
                       width=1400,
                       height=600,
                       )
