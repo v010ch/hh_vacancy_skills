@@ -63,9 +63,8 @@ def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
                                                              return_dtype=pl.Float32)
                                                .alias('proportion'),
                            )\
-             .sort(by='proportion', descending=True)
-
-    tmp = tmp.filter(pl.col('proportion') >= 0.01)
+             .sort(by='proportion', descending=True)\
+             .filter(pl.col('proportion') >= 0.01)
 
     key_skills = tmp['key_skills'].unique()
     key_skills = key_skills.to_frame()\
@@ -90,11 +89,12 @@ def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
                                          (pl.col('6') - pl.col('5')).alias('diff_2'),
                                          (pl.col('6') - pl.col('4')).alias('diff_3'),
                                          )
-    key_skills = key_skills.with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3')\
+    key_skills = key_skills.with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3',
+                                                            ignore_nulls=False)\
                                            .alias('trend')
                                          )\
                            .sort('trend', descending=True)\
-                           .drop_nans('trend')
+                           #  .drop_nans('trend')
 
     return key_skills
 
@@ -239,14 +239,22 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
     else:  # trends_part == '41-60':
         data = trends[41:]
 
+    x = [0, 1, 2]
+    skill_names = set(data['key_skills'])
     # ttl_incert = ttl_word[by_period]
     ttl = f'Отображение трендов топ {trends_part} скилов'
-    fig.add_trace(go.Scatter(x=data[by_period],
-                             y=tmp_grade['vacancy_id'],
-                             line={'color': COLORS_GRADE[el],
-                                   'width': 2,
-                                   },
-                             name=el))
+    for el in skill_names:
+        tmp = data.filter(pl.col('key_skills') == el)\
+                            [['diff_1', 'diff_2', 'diff_3']]
+        fig.add_trace(go.Scatter(x=x,
+                                 y=tmp.to_numpy()[0],
+                                 mode='lines',
+                                 name=el,
+                                 line={'color': COLORS_GRADE[el],
+                                       'width': 2,
+                                       },
+                                 )
+                      )
 
     fig.update_layout(title_text=ttl,
                       title_x=0.5,
