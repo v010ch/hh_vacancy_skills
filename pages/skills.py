@@ -1,7 +1,7 @@
 '''Дашборд для обзора ключевых скилов'''
 
-import os
 import datetime
+import os
 
 from dash import register_page, callback, dash_table, dcc, html, Output, Input
 import polars as pl
@@ -16,6 +16,9 @@ register_page(__name__,
 
 DATA_PATH = os.path.join('.', 'data')
 ONLY_ROLES = set(['intern', 'junior', 'middle', 'senior', 'head'])
+MONTH_NAME = ['', 'Январь', 'Февраль', 'Март', 'Апрель',
+              'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь',
+              'Октябрь', 'Ноябрь', 'Декабрь']
 
 
 def load_and_prepare_data() -> pl.DataFrame:
@@ -51,11 +54,12 @@ def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
         year = inp_df['year'].max()
         month = inp_df['month'].max() - 2
 
-    tmp = inp_df.filter(pl.col('date_created') >= datetime.date(year, month, 1))
-    tmp = tmp.filter(pl.col('grade').is_in(ONLY_ROLES))
+    tmp = inp_df.filter(pl.col('date_created') >= datetime.date(year, month, 1))\
+                .filter(pl.col('grade').is_in(ONLY_ROLES))
 
-    tmp = tmp.group_by('month').agg(pl.col('key_skills').value_counts(normalize=True))
-    tmp = tmp.explode('key_skills')\
+    # tmp = tmp.
+    tmp = tmp.group_by('month').agg(pl.col('key_skills').value_counts(normalize=True))\
+             .explode('key_skills')\
              .with_columns(pl.col('key_skills').map_elements(lambda x: x['key_skills'],
                                                              return_dtype=pl.String)
                                                .alias('key_skills'),
@@ -88,8 +92,8 @@ def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
     key_skills = key_skills.with_columns((pl.col('5') - pl.col('4')).alias('diff_1'),
                                          (pl.col('6') - pl.col('5')).alias('diff_2'),
                                          (pl.col('6') - pl.col('4')).alias('diff_3'),
-                                         )
-    key_skills = key_skills.with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3',
+                                         )\
+                           .with_columns(pl.mean_horizontal('diff_1', 'diff_2', 'diff_3',
                                                             ignore_nulls=False)\
                                            .alias('trend')
                                          )\
@@ -112,7 +116,7 @@ table = skills['key_skills'].value_counts(normalize=True)\
 #                            )[:80]
 # table.columns = ['Ключевые скилы', 'Процент в вакансиях']
 trends = trend_table(skills)
-
+print(trends.columns)
 
 percentage = dash_table.FormatTemplate.percentage(2)
 columns = [
@@ -150,8 +154,8 @@ layout = html.Div([
     dcc.Graph(figure={}, id='skills_trends'),
     html.P('Отображать топ N скилов:'),
     dcc.Dropdown(id='trend_by_grade',
-                 options=['0-20', '21-40', '41-60'],
-                 value='0-20', clearable=False,
+                 options=['1-10', '11-20', '21-30'],
+                 value='1-10', clearable=False,
                  ),
     # html.P('Отображать тренды по грейду:'),
     # dcc.Dropdown(id='trend_by_grade',
@@ -230,18 +234,20 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
     return
         go.Figure - подготовленный для отображения график
     '''
+    print(trends_part)
     fig = go.Figure()
 
-    if trends_part == '0-20':
-        data = trends[:20]
-    elif trends_part == '21-40':
-        data = trends[21:40]
-    else:  # trends_part == '41-60':
-        data = trends[41:]
+    if trends_part == '1-10':
+        data = trends[:10]
+    elif trends_part == '11-20':
+        data = trends[11:20]
+    else:  # trends_part == '21-30':
+        data = trends[21:]
 
-    x = [0, 1, 2]
+    month = int(data.columns[1])
+    x = [MONTH_NAME[month], MONTH_NAME[month+1], MONTH_NAME[month+2]]
     skill_names = set(data['key_skills'])
-    # ttl_incert = ttl_word[by_period]
+
     ttl = f'Отображение трендов топ {trends_part} скилов'
     for el in skill_names:
         tmp = data.filter(pl.col('key_skills') == el)\
@@ -250,9 +256,9 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
                                  y=tmp.to_numpy()[0],
                                  mode='lines',
                                  name=el,
-                                 line={'color': COLORS_GRADE[el],
-                                       'width': 2,
-                                       },
+                                 # line={'color': COLORS_GRADE[el],
+                                 #       'width': 2,
+                                 #       },
                                  )
                       )
 
@@ -260,6 +266,7 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
                       title_x=0.5,
                       font={'size': 18},
                       width=1400,
-                      height=600)
+                      height=600,
+                      )
 
     return fig
