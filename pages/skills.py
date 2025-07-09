@@ -103,6 +103,28 @@ def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
     return key_skills
 
 
+def get_trend_options(inp_len: int) -> list[dict]:
+    '''
+    Получение опций количества возможных отображений
+    трендовых скилов
+    args
+        inp_len: int - кол-во трендов, доступных к отображению
+    return
+        опции для отображения в dcc.Dropdown
+    '''
+    if inp_len > 40:
+        inp_len = 40
+
+    sections = [f'{el*(10) + 1}-{(el + 1)*10}' for el in range(inp_len // 10)]
+    if inp_len % 10 > 0:
+        tmp = (inp_len // 10)
+        sections.append(f'{tmp*10 + 1}-{tmp*10 + (inp_len % 10)}')
+
+    sections = [{'label': f'{el}', 'value': f'{el}'} for el in sections]
+
+    return sections
+
+
 skills = load_and_prepare_data()
 min_date = str(skills['date_created'].min().date())
 max_date = str(skills['date_created'].max().date())
@@ -116,6 +138,7 @@ table = skills['key_skills'].value_counts(normalize=True)\
 #                            )[:80]
 # table.columns = ['Ключевые скилы', 'Процент в вакансиях']
 trends = trend_table(skills)
+trend_options = get_trend_options(trends.shape[0])
 
 
 percentage = dash_table.FormatTemplate.percentage(2)
@@ -154,7 +177,8 @@ layout = html.Div([
     dcc.Graph(figure={}, id='skills_trends'),
     html.P('Отображать топ N скилов:'),
     dcc.Dropdown(id='trends_part',
-                 options=['1-10', '11-20', '21-30'],
+                 # options=['1-10', '11-20', '21-30'],
+                 options=trend_options,
                  value='1-10', clearable=False,
                  ),
     # html.P('Отображать тренды по грейду:'),
@@ -218,10 +242,11 @@ def figure_wordcloud(inp_grade: str, inp_exclude: bool):
 
     return fig
 
-# Input(component_id='trends_by_grade', component_property='value'),
+
 @callback(
     Output(component_id='skills_trends', component_property='figure'),
     Input(component_id='trends_part', component_property='value'),
+    # Input(component_id='trends_by_grade', component_property='value'),
 )
 def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
     '''
