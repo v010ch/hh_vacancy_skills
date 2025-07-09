@@ -259,13 +259,16 @@ def scatter_trend_skills(trends_part: str):  # trends_by_grade: str
         go.Figure - подготовленный для отображения график
     '''
     fig = go.Figure()
+    nfrom = int(trends_part.split('-')[0])
+    nto = int(trends_part.split('-')[1])
 
-    if trends_part == '1-10':
-        data = trends[:10]
-    elif trends_part == '11-20':
-        data = trends[11:20]
-    else:  # trends_part == '21-30':
-        data = trends[21:30]
+    data = trends[nfrom - 1 : nto]
+    # if trends_part == '1-10':
+    #     data = trends[:10]
+    # elif trends_part == '11-20':
+    #     data = trends[11:20]
+    # else:  # trends_part == '21-30':
+    #     data = trends[21:30]
 
     month = int(data.columns[1])
     x = [MONTH_NAME[month], MONTH_NAME[month+1], MONTH_NAME[month+2]]
