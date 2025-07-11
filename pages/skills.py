@@ -11,7 +11,7 @@ from wordcloud import WordCloud
 register_page(__name__,
               path='/skills_dashboard',
               title='Skills Dashboard',
-              name='Обзор требуемых умений (скилов)',
+              name='Обзор ключевых скилов (требуемых умений)',
               )
 
 DATA_PATH = os.path.join('.', 'data')
@@ -43,8 +43,12 @@ def load_and_prepare_data() -> pl.DataFrame:
 
 def trend_table(inp_df: pl.DataFrame) -> pl.DataFrame:
     '''
+    Получение таблицы с усредненными трендами ключевых скилов.
+    Тренды по месяцам
     args
+        inp_df: pl.DataFrame - исходный датафрейм с клювыми скилами
     return
+        pl.DataFrame - датафрейм с трендами ключевых скилов
     '''
     if inp_df['month'].max() < 2:
         # new year cross
@@ -117,7 +121,7 @@ def get_trend_options(inp_len: int) -> list[dict]:
 
     sections = [f'{el*(10) + 1}-{(el + 1)*10}' for el in range(inp_len // 10)]
     if inp_len % 10 > 0:
-        tmp = (inp_len // 10)
+        tmp = inp_len // 10
         sections.append(f'{tmp*10 + 1}-{tmp*10 + (inp_len % 10)}')
 
     sections = [{'label': f'{el}', 'value': f'{el}'} for el in sections]
@@ -154,7 +158,7 @@ layout = html.Div([
     html.Br(),
 
     # Блок отображения облака скилов
-    html.H2('Облако слов ключевых вакансий'),
+    html.H2('Облако слов ключевых скилов в вакансиях'),
     dcc.Graph(figure={}, id='wordcloud'),
     html.P('Отображать облако скилов по грейду:'),
     dcc.Dropdown(id='by_grade',
@@ -173,11 +177,11 @@ layout = html.Div([
     html.Br(),
 
     # Блок отображения трендов скилов
-    html.H2('Максимальные тренды скилов (за 3 месяца, не менее 1% вакансий)'),
+    html.H2('Максимальные средние тренды скилов (по месяцам,'
+            ' за последние 3 месяца, не менее 1% вакансий)'),
     dcc.Graph(figure={}, id='skills_trends'),
     html.P('Отображать топ N скилов:'),
     dcc.Dropdown(id='trends_part',
-                 # options=['1-10', '11-20', '21-30'],
                  options=trend_options,
                  value='1-10', clearable=False,
                  ),
@@ -190,7 +194,7 @@ layout = html.Div([
     html.Br(),
 
     # Блок отображения таблицы скилов
-    html.H2('Процент ключевых скилов в вакансиях'),
+    html.H2('Процент ключевых скилов в вакансиях за все время'),
     dash_table.DataTable(style_data={'width': '300',
                                      'maxWidth': '300px',
                                      'minWidth': '300px',
