@@ -10,10 +10,11 @@ from skills_synonym_dict import skills_synonym_dict
 
 DATA_PATH = os.path.join('.', 'data')
 
-# eur  https://www.val.ru/valhistory.asp?tool=978   
-# kzt  https://www.val.ru/valhistory.asp?tool=398   
-# usd  https://www.val.ru/valhistory.asp?tool=840   
-# byr  https://www.val.ru/valhistory.asp?tool=125396   
+# eur  https://www.val.ru/valhistory.asp?tool=978
+# kzt  https://www.val.ru/valhistory.asp?tool=398
+# usd  https://www.val.ru/valhistory.asp?tool=840
+# byr  https://www.val.ru/valhistory.asp?tool=125396
+# kgs  https://www.val.ru/valhistory.asp?tool=417
 
 
 def prepare_er(inp_df: pl.DataFrame, inp_curr: str) -> pl.DataFrame:
@@ -33,7 +34,7 @@ def prepare_er(inp_df: pl.DataFrame, inp_curr: str) -> pl.DataFrame:
     cur = cur.with_columns(pl.col('date').str.to_date('%d.%m.%y'))
 
     # cnt column != 1
-    if inp_curr == 'kzt':
+    if inp_curr == 'kzt' or inp_curr == 'kgs':
         cur = cur.with_columns((pl.col('er') / pl.col('cnt'))\
                                .alias('er')
                                )
@@ -110,6 +111,7 @@ if __name__ == '__main__':
     er = prepare_er(er, 'eur')
     er = prepare_er(er, 'kzt')
     er = prepare_er(er, 'byr')
+    er = prepare_er(er, 'kgs')
 
     cols = er.columns
     cols[1] = 'er_usd'
