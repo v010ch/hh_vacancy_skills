@@ -41,12 +41,14 @@
 
     pip install -r requirements.txt
 
-Создать внутри директории проекта папку     
+Создать внутри директории проекта папку data     
 
-    data
+    mkdir data    
 
-Скопировать в папку data дата файлы skills_prepared.csv и vacancies_prepared.csv
+Скопировать в папку data дата файлы skills_prepared.csv и vacancies_prepared.csv    
 Данные можно загрузить с [я.диск](https://disk.yandex.ru/d/nlP6apvpMBx5PA) или [g.drive](https://drive.google.com/file/d/1kqVMJ3EfUlleJSUorfSKOWhGBtNz0h7n/view?usp=sharing)
+
+Выполнить команду
 
     python dash_app.py
 
