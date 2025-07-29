@@ -33,6 +33,19 @@
 
 ## Воспроизведение проекта
 
-(раздел находится в разработке)
+Копировать проект
+    git clone https://github.com/v010ch/hh_vacancy_skills
 
-Данные можно загрузить с [я.диск](https://disk.yandex.ru/d/nlP6apvpMBx5PA) или [g.disk](https://drive.google.com/file/d/1kqVMJ3EfUlleJSUorfSKOWhGBtNz0h7n/view?usp=sharing)
+Установить требуемые зависимости
+    pip install -r requirements.txt
+
+Создать внутри директории проекта папку 
+    data
+
+Скопировать в папку data дата файлы skills_prepared.csv и vacancies_prepared.csv
+Данные можно загрузить с [я.диск](https://disk.yandex.ru/d/nlP6apvpMBx5PA) или [g.drive](https://drive.google.com/file/d/1kqVMJ3EfUlleJSUorfSKOWhGBtNz0h7n/view?usp=sharing)
+
+    python dash_app.py
+
+Перейти в браузере по адресу
+    http://127.0.0.1:8050/
