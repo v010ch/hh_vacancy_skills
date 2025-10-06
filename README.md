@@ -2,12 +2,14 @@
 Проект сбора и анализа вакансий и указанных в них ключевых скилов,
 с отображением в дашборде.
 
-
+![Пример работы](work.gif)
 
 Оглавление
 - [Описание проекта](#описание-проекта)
 - [Техническое описание проекта](#техническое-описание-проекта)
+- [Отображение дашборда](#отображение-дашборда)
 - [Воспроизведение проекта](#воспроизведение-проекта)
+
 
 
 ## Описание проекта
@@ -23,16 +25,56 @@
 времени и грейдам.
 
 
+
 ## Техническое описание проекта
 
 Данные с hh.ru собираются по средствам api, через библиотеку request.
-Сохранение данных происходит в pandas.
+Сохранение данных происходит в csv.
 
 Отображение происходит по средствам библиотеки [dash](https://dash.plotly.com/)
 
 
+
+## Отображение дашборда
+(без полного воспроизведения проекта)
+
+Копировать проект    
+
+    git clone https://github.com/v010ch/hh_vacancy_skills
+
+Установить требуемые зависимости    
+
+    pip install -r requirements_minimal.txt
+
+Создать внутри директории проекта папку data     
+
+    mkdir data    
+
+Скопировать в папку data файлы skills_prepared.csv и vacancies_prepared.csv    
+Данные можно загрузить с [я.диск](https://disk.yandex.ru/d/nlP6apvpMBx5PA) или [g.drive](https://drive.google.com/file/d/1kqVMJ3EfUlleJSUorfSKOWhGBtNz0h7n/view?usp=sharing)
+
+Выполнить команду
+
+    python dash_app.py
+
+Перейти в браузере по адресу    
+
+    http://127.0.0.1:8050/
+
+
+
 ## Воспроизведение проекта
 
-(раздел находится в разработке)
+    (раздел нахордится в разработке)
 
-Данные можно загрузить с [я.диск](https://disk.yandex.ru/d/nlP6apvpMBx5PA) или [g.disk](https://drive.google.com/file/d/1kqVMJ3EfUlleJSUorfSKOWhGBtNz0h7n/view?usp=sharing)
+Копировать проект    
+
+    git clone https://github.com/v010ch/hh_vacancy_skills
+
+Установить требуемые зависимости    
+
+    pip install -r requirements_minimal.txt
+
+Создать внутри директории проекта папку data     
+
+    mkdir data    
